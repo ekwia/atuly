@@ -116,7 +116,9 @@ export default function App() {
   // Listen to Firebase Auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      const authMethod = localStorage.getItem("atulya_auth_method");
       if (firebaseUser) {
+        localStorage.setItem("atulya_auth_method", "firebase");
         const email = (firebaseUser.email || "").toLowerCase().trim();
         const isAtulyaDomain = email.endsWith("@atulyagold.com");
         const isAdminEmail = email === "vaidwanprince@gmail.com" || email === "videads@gmail.com" || email === "atulygold333@gmail.com";
@@ -150,8 +152,12 @@ export default function App() {
           localStorage.setItem("atulya_user", JSON.stringify(user));
         }
       } else {
+        if (authMethod === "local") {
+          return;
+        }
         setCurrentUser(null);
         localStorage.removeItem("atulya_user");
+        localStorage.removeItem("atulya_auth_method");
       }
     });
     return () => unsubscribe();
@@ -864,6 +870,8 @@ export default function App() {
                               console.error("Sign-out error:", err);
                             }
                             setCurrentUser(null);
+                            localStorage.removeItem("atulya_user");
+                            localStorage.removeItem("atulya_auth_method");
                             setProfileDropdownOpen(false);
                             setActiveTab('home');
                           }}
@@ -991,6 +999,7 @@ export default function App() {
               }
               setCurrentUser(null);
               localStorage.removeItem("atulya_user");
+              localStorage.removeItem("atulya_auth_method");
               setActiveTab('home');
             }}
             onUpdateUser={(updatedUser) => {

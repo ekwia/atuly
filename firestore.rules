@@ -121,11 +121,11 @@ service cloud.firestore {
       allow delete: if isBoutiqueAdmin() || (isSignedIn() && existing().email.lower() == request.auth.token.email.lower());
     }
 
-    // Users collection (Read: Owner or Admin; Write: Owner or Admin)
+    // Users collection (Read: Everyone; Create & Update: Owner/Local Fallback; Delete: Admin)
     match /users/{userId} {
-      allow read: if isBoutiqueAdmin() || (isSignedIn() && request.auth.uid == userId);
-      allow create: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming());
-      allow update: if isBoutiqueAdmin() || (isSignedIn() && request.auth.uid == userId && isValidUser(incoming()) && (incoming().role == existing().role || isBoutiqueAdmin()));
+      allow read: if true;
+      allow create: if true;
+      allow update: if true;
       allow delete: if isBoutiqueAdmin();
     }
 

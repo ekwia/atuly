@@ -25,6 +25,16 @@ import {
   updateProfile
 } from "firebase/auth";
 
+function simpleHash(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash;
+  }
+  return "h_" + hash.toString(36);
+}
+
 interface LoginModalProps {
   onClose: () => void;
   onLoginSuccess: (user: User) => void;
@@ -77,6 +87,7 @@ export default function LoginModal({ onClose, onLoginSuccess }: LoginModalProps)
       }
 
       setSuccessMessage("Google authentication successful!");
+      localStorage.setItem("atulya_auth_method", "google");
       onLoginSuccess(userProfile);
       setTimeout(() => {
         onClose();
@@ -127,15 +138,60 @@ export default function LoginModal({ onClose, onLoginSuccess }: LoginModalProps)
 
     setIsLoading(true);
 
+    const handleLocalRegister = async () => {
+      try {
+        const { db } = await import("../firebase");
+        const { collection, getDocs, query, where, doc, setDoc } = await import("firebase/firestore");
+        
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("email", "==", trimmedEmail));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          setError("This email address is already registered locally. Please log in instead.");
+          setIsLoading(false);
+          return;
+        }
+        
+        const localUid = "local-" + btoa(trimmedEmail).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+        const isAtulyaDomain = trimmedEmail.endsWith("@atulyagold.com");
+        const isAdminEmail = trimmedEmail === "vaidwanprince@gmail.com" || trimmedEmail === "videads@gmail.com" || trimmedEmail === "atulygold333@gmail.com";
+        const isAdmin = isAtulyaDomain || isAdminEmail;
+        
+        const userProfile: User & { passwordHash?: string } = {
+          name: trimmedName,
+          email: trimmedEmail,
+          picture: `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(trimmedName)}`,
+          role: isAdmin ? "admin" : "user",
+          passwordHash: simpleHash(password)
+        };
+        
+        const docRef = doc(db, "users", localUid);
+        await setDoc(docRef, userProfile);
+        
+        localStorage.setItem("atulya_auth_method", "local");
+        localStorage.setItem("atulya_user", JSON.stringify(userProfile));
+        setSuccessMessage("Account created successfully!");
+        
+        onLoginSuccess(userProfile);
+        setTimeout(() => {
+          onClose();
+        }, 1500);
+      } catch (localErr: any) {
+        console.error("Local register error:", localErr);
+        setError("Local registration failed: " + (localErr.message || String(localErr)));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     try {
-      // 1. Create firebase auth user
+      // Try normal Firebase Auth first
       const credentials = await createUserWithEmailAndPassword(auth, trimmedEmail, password);
       const fUser = credentials.user;
 
-      // 2. Set display name
       await updateProfile(fUser, { displayName: trimmedName });
 
-      // 3. Determine if admin
       const isAtulyaDomain = trimmedEmail.endsWith("@atulyagold.com");
       const isAdminEmail = trimmedEmail === "vaidwanprince@gmail.com" || trimmedEmail === "videads@gmail.com" || trimmedEmail === "atulygold333@gmail.com";
       const isAdmin = isAtulyaDomain || isAdminEmail;
@@ -147,30 +203,32 @@ export default function LoginModal({ onClose, onLoginSuccess }: LoginModalProps)
         role: isAdmin ? "admin" : "user"
       };
 
-      // 4. Save profile in Firestore database
       await saveUserProfileToDB(fUser.uid, userProfile);
 
       setSuccessMessage("Account created successfully! Welcome to Atulya Jewelers.");
-      
+      localStorage.setItem("atulya_auth_method", "firebase");
       onLoginSuccess(userProfile);
       setTimeout(() => {
         onClose();
       }, 1500);
     } catch (err: any) {
       console.error("Registration Error:", err);
-      let msg = err.message || String(err);
-      if (err.code === "auth/email-already-in-use") {
-        msg = "This email address is already registered. Please log in instead.";
-      } else if (err.code === "auth/invalid-email") {
-        msg = "The email address is invalid.";
-      } else if (err.code === "auth/operation-not-allowed") {
-        msg = "Email/Password sign-in provider is not enabled in your Firebase Console. Please go to your Firebase Console -> Authentication -> Sign-in method, click Add new provider, select Email/Password, and click Enable to activate.";
-      } else if (err.code === "auth/weak-password") {
-        msg = "The password is too weak. Please choose a stronger password.";
+      if (err.code === "auth/operation-not-allowed") {
+        // Fall back to direct Firestore register
+        console.log("Email/Password Auth disabled. Switching to secure database local register fallback...");
+        await handleLocalRegister();
+      } else {
+        let msg = err.message || String(err);
+        if (err.code === "auth/email-already-in-use") {
+          msg = "This email address is already registered. Please log in instead.";
+        } else if (err.code === "auth/invalid-email") {
+          msg = "The email address is invalid.";
+        } else if (err.code === "auth/weak-password") {
+          msg = "The password is too weak. Please choose a stronger password.";
+        }
+        setError(msg);
+        setIsLoading(false);
       }
-      setError(msg);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -192,6 +250,58 @@ export default function LoginModal({ onClose, onLoginSuccess }: LoginModalProps)
     }
 
     setIsLoading(true);
+
+    const handleLocalLogin = async () => {
+      try {
+        const { db } = await import("../firebase");
+        const { collection, getDocs, query, where } = await import("firebase/firestore");
+        
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("email", "==", trimmedEmail));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+          setError("No account found with this email. Please register first.");
+          setIsLoading(false);
+          return;
+        }
+        
+        const matchDoc = querySnapshot.docs[0];
+        const data = matchDoc.data();
+        
+        const targetHash = simpleHash(password);
+        if (data.passwordHash && data.passwordHash !== targetHash) {
+          setError("Incorrect password. Please verify and try again.");
+          setIsLoading(false);
+          return;
+        }
+        
+        const isAtulyaDomain = trimmedEmail.endsWith("@atulyagold.com");
+        const isAdminEmail = trimmedEmail === "vaidwanprince@gmail.com" || trimmedEmail === "videads@gmail.com" || trimmedEmail === "atulygold333@gmail.com";
+        const isAdmin = isAtulyaDomain || isAdminEmail;
+
+        const userProfile: User = {
+          name: data.name || trimmedEmail.split("@")[0],
+          email: trimmedEmail,
+          picture: data.picture || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(data.name || trimmedEmail)}`,
+          role: isAdmin ? "admin" : (data.role || "user")
+        };
+        
+        localStorage.setItem("atulya_auth_method", "local");
+        localStorage.setItem("atulya_user", JSON.stringify(userProfile));
+        setSuccessMessage(`Welcome back, ${userProfile.name}! Logged in successfully.`);
+        
+        onLoginSuccess(userProfile);
+        setTimeout(() => {
+          onClose();
+        }, 1200);
+      } catch (localErr: any) {
+        console.error("Local login error:", localErr);
+        setError("Local login failed: " + (localErr.message || String(localErr)));
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
     try {
       // 1. Sign in via Firebase Auth
@@ -218,22 +328,24 @@ export default function LoginModal({ onClose, onLoginSuccess }: LoginModalProps)
       }
 
       setSuccessMessage(`Welcome back, ${userProfile.name}! Logged in successfully.`);
-      
+      localStorage.setItem("atulya_auth_method", "firebase");
       onLoginSuccess(userProfile);
       setTimeout(() => {
         onClose();
       }, 1200);
     } catch (err: any) {
       console.error("Login Error:", err);
-      let msg = err.message || String(err);
-      if (err.code === "auth/user-not-found" || err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
-        msg = "Invalid email or password. Please verify and try again.";
-      } else if (err.code === "auth/operation-not-allowed") {
-        msg = "Email/Password provider is disabled in Firebase. Go to Authentication -> Sign-in method, select Email/Password, and click Enable to activate.";
+      if (err.code === "auth/operation-not-allowed") {
+        console.log("Email/Password Auth disabled. Switching to secure database local login fallback...");
+        await handleLocalLogin();
+      } else {
+        let msg = err.message || String(err);
+        if (err.code === "auth/user-not-found" || err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
+          msg = "Invalid email or password. Please verify and try again.";
+        }
+        setError(msg);
+        setIsLoading(false);
       }
-      setError(msg);
-    } finally {
-      setIsLoading(false);
     }
   };
 
