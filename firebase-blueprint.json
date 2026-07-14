@@ -1,0 +1,94 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "A jewelry product in the catalog",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number" },
+        "title": { "type": "string" },
+        "price": { "type": "number" },
+        "originalPrice": { "type": "number" },
+        "category": { "type": "string" },
+        "material": { "type": "string" },
+        "image": { "type": "string" },
+        "rating": { "type": "number" },
+        "ratingCount": { "type": "number" },
+        "sold": { "type": "number" },
+        "badge": { "type": "string" },
+        "description": { "type": "string" },
+        "attributes": { "type": "array" }
+      },
+      "required": ["id", "title", "price", "category", "material", "image"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "A customer order",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerEmail": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "shippingAddress": { "type": "string" },
+        "city": { "type": "string" },
+        "pincode": { "type": "string" },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "gst": { "type": "number" },
+        "grandTotal": { "type": "number" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "paymentStatus": { "type": "string" }
+      },
+      "required": ["id", "customerName", "customerEmail", "customerPhone", "shippingAddress", "city", "pincode", "items", "subtotal", "gst", "grandTotal", "status", "createdAt", "paymentStatus"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "A product review from customers",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "number" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "rating": { "type": "number" },
+        "text": { "type": "string" },
+        "date": { "type": "string" },
+        "avatar": { "type": "string" }
+      },
+      "required": ["id", "productId", "name", "email", "rating", "text", "date", "avatar"]
+    },
+    "User": {
+      "title": "User",
+      "description": "A registered user profile document in Firestore",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "picture": { "type": "string" },
+        "role": { "type": "string" }
+      },
+      "required": ["uid", "name", "email", "role"]
+    }
+  },
+  "firestore": {
+    "products": {
+      "schema": "Product",
+      "description": "Collection of all jewelry products in catalog"
+    },
+    "orders": {
+      "schema": "Order",
+      "description": "Collection of customer jewelry orders"
+    },
+    "reviews": {
+      "schema": "Review",
+      "description": "Collection of product reviews from customers"
+    },
+    "users": {
+      "schema": "User",
+      "description": "Collection of registered user profiles"
+    }
+  }
+}

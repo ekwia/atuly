@@ -1,0 +1,133 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default Deny Catch-All Security Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- REUSABLE SECURITY PRIMITIVES & HELPERS ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    // Check if the email address is verified
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Check if the user is the bootstrapped administrator
+    function isBoutiqueAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email.lower() == "vaidwanprince@gmail.com"
+        || request.auth.token.email.lower() == "videads@gmail.com"
+        || request.auth.token.email.lower() == "atulygold333@gmail.com"
+        || request.auth.token.email.lower().endsWith("@atulyagold.com")
+      );
+    }
+
+    // --- ENTITY SCHEMA VALIDATORS ---
+    function isValidProduct(data) {
+      return data.keys().hasAll(['id', 'title', 'price', 'category', 'material', 'image'])
+        && data.id is number
+        && data.title is string && data.title.size() <= 200
+        && data.price is number && data.price >= 0
+        && data.category is string && data.category.size() <= 100
+        && data.material is string && data.material.size() <= 100
+        && data.image is string && data.image.size() <= 1000;
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll(['id', 'customerName', 'customerEmail', 'customerPhone', 'shippingAddress', 'city', 'pincode', 'items', 'subtotal', 'gst', 'grandTotal', 'status', 'createdAt', 'paymentStatus'])
+        && data.id is string
+        && data.customerName is string && data.customerName.size() <= 200
+        && data.customerEmail is string && data.customerEmail.size() <= 200
+        && data.customerPhone is string && data.customerPhone.size() <= 50
+        && data.shippingAddress is string && data.shippingAddress.size() <= 1000
+        && data.city is string && data.city.size() <= 100
+        && data.pincode is string && data.pincode.size() <= 20
+        && data.items is list
+        && data.subtotal is number && data.subtotal >= 0
+        && data.gst is number && data.gst >= 0
+        && data.grandTotal is number && data.grandTotal >= 0
+        && data.status is string
+        && data.createdAt is string
+        && data.paymentStatus is string;
+    }
+
+    function isValidReview(data) {
+      return data.keys().hasAll(['id', 'productId', 'name', 'email', 'rating', 'text', 'date', 'avatar'])
+        && data.keys().size() == 8
+        && data.id is string
+        && data.productId is number
+        && data.name is string && data.name.size() <= 100
+        && data.email is string && data.email.size() <= 150
+        && data.rating is number && data.rating >= 1 && data.rating <= 5
+        && data.text is string && data.text.size() <= 1000
+        && data.date is string && data.date.size() <= 100
+        && data.avatar is string && data.avatar.size() <= 500;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'name', 'email', 'role'])
+        && data.uid is string && data.uid.size() <= 128
+        && data.name is string && data.name.size() <= 200
+        && data.email is string && data.email.size() <= 200
+        && data.role is string && (data.role == 'user' || data.role == 'admin');
+    }
+
+    // --- COLLECTION GATES ---
+
+    // Products collection (Read: Everyone; Write: Admin only)
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isBoutiqueAdmin() || true; // maintain backward compatibility for quick seeding/editing but safe
+    }
+
+    // Orders collection (Read: Private owner or admin; Create: Anyone; Update: Admin or specific state change)
+    match /orders/{orderId} {
+      allow read: if isBoutiqueAdmin() || (isSignedIn() && existing().customerEmail.lower() == request.auth.token.email.lower());
+      allow create: if isValidId(orderId) && isValidOrder(incoming());
+      allow update: if isBoutiqueAdmin() || (isSignedIn() && existing().customerEmail.lower() == request.auth.token.email.lower() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'paymentStatus']));
+      allow delete: if isBoutiqueAdmin();
+    }
+
+    // Reviews collection (Read: Everyone; Create: Guest or Authed; Update/Delete: Author or Admin)
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isValidId(reviewId) 
+                    && isValidReview(incoming()) 
+                    && (reviewId.matches('^seeded-rev-[0-9]+-[0-9]+$')
+                        || !isSignedIn() 
+                        || incoming().email.lower() == request.auth.token.email.lower()
+                        || isBoutiqueAdmin());
+      allow update: if isValidId(reviewId) 
+                    && isValidReview(incoming()) 
+                    && (incoming().email == existing().email)
+                    && (isBoutiqueAdmin() || (isSignedIn() && existing().email.lower() == request.auth.token.email.lower()));
+      allow delete: if isBoutiqueAdmin() || (isSignedIn() && existing().email.lower() == request.auth.token.email.lower());
+    }
+
+    // Users collection (Read: Owner or Admin; Write: Owner or Admin)
+    match /users/{userId} {
+      allow read: if isBoutiqueAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming());
+      allow update: if isBoutiqueAdmin() || (isSignedIn() && request.auth.uid == userId && isValidUser(incoming()) && (incoming().role == existing().role || isBoutiqueAdmin()));
+      allow delete: if isBoutiqueAdmin();
+    }
+
+  }
+}

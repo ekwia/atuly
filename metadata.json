@@ -1,0 +1,6 @@
+{
+  "name": "Atulya Gold",
+  "description": "Premium luxury gold, diamond, and silver jewelry collections with real-time price estimation, dynamic shopping cart, order placement, and AI Jewelry Consultant assistant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
