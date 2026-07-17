@@ -91,13 +91,13 @@ export default function GoldCalculator({ onClose, goldRates, isPage = false, onB
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-gold-dark font-black text-xs uppercase tracking-widest">
               <Landmark className="w-4 h-4" />
-              <span>Real-Time Market Integration</span>
+              <span>Live Gold & Silver Rates</span>
             </div>
             <h1 className="font-serif font-black text-2xl md:text-3xl text-neutral-900 tracking-tight">
-              Precious Metals Valuation Studio
+              Gold & Silver Price Calculator
             </h1>
             <p className="text-xs text-neutral-500 max-w-2xl">
-              Calculate exact certified valuations for gold, silver, and platinum under sovereign BIS-Hallmark standards. Updated automatically based on live market indices.
+              Calculate the exact price of gold, silver, and platinum with today's live market rates. This is based on standard BIS-Hallmark quality.
             </p>
           </div>
           {onBackToHome && (
@@ -107,7 +107,7 @@ export default function GoldCalculator({ onClose, goldRates, isPage = false, onB
               className="inline-flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-850 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs self-start md:self-center"
             >
               <ArrowLeft className="w-4 h-4 text-gold" />
-              <span>Back to Master Catalog</span>
+              <span>Back to Jewelry Catalog</span>
             </button>
           )}
         </div>
@@ -140,8 +140,8 @@ export default function GoldCalculator({ onClose, goldRates, isPage = false, onB
                 <Calculator className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="font-serif font-black text-lg text-neutral-900">Custom Estimation Engine</h2>
-                <p className="text-[10px] text-neutral-400">Personalize metal weight, making rates, and taxes</p>
+                <h2 className="font-serif font-black text-lg text-neutral-900">Calculate Your Jewelry Price</h2>
+                <p className="text-[10px] text-neutral-400">Enter weight, purity, and making charges to get total price</p>
               </div>
             </div>
 
@@ -324,14 +324,14 @@ export default function GoldCalculator({ onClose, goldRates, isPage = false, onB
                       className="py-2.5 rounded-xl bg-gold hover:bg-gold-dark text-neutral-950 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-gold/15"
                     >
                       <Download className="w-3.5 h-3.5 text-neutral-900" />
-                      <span>Print Certified Estimate</span>
+                      <span>Download Estimate Bill</span>
                     </button>
                   </div>
                 </div>
               ) : (
                 <div className="text-center py-12 text-neutral-400 text-xs bg-neutral-50 rounded-2xl border border-dashed border-neutral-200">
                   <Calculator className="w-8 h-8 text-neutral-300 mx-auto mb-2 animate-bounce" />
-                  <span>Please adjust weight slider or input to perform live evaluation</span>
+                  <span>Please change weight or select a metal to see the price</span>
                 </div>
               )}
             </div>
@@ -399,17 +399,17 @@ export default function GoldCalculator({ onClose, goldRates, isPage = false, onB
               <span className="text-[9px] text-neutral-400 font-bold block text-center uppercase tracking-widest">Simulated intraday commodity index (INR)</span>
             </div>
 
-            {/* Sovereign Safeguards */}
+            {/* Purity & Trust Guide */}
             <div className="bg-white rounded-3xl p-5 border border-neutral-150/70 shadow-sm space-y-4">
               <h3 className="font-serif font-black text-sm text-neutral-900 flex items-center gap-1.5">
                 <Award className="w-4.5 h-4.5 text-gold" />
-                <span>Sovereign Safeguards</span>
+                <span>Gold Purity & Trust Guide</span>
               </h3>
               <div className="space-y-3.5">
                 {[
-                  { title: "24K Fine Gold vs 22K Jewel Gold", desc: "24 Karat represents 99.9% fine pure gold, ideal for pure asset saving bars. 22 Karat contains 91.6% pure gold mixed with alloys, offering ideal structural strength for intricate wedding jewelry." },
-                  { title: "BIS 916 Hallmark Shield", desc: "Bureau of Indian Standards hallmarking verifies gold purity laser-etched onto every jewelry element, protecting your resale value and lifetime asset exchangeability." },
-                  { title: "Transparent Buyback", desc: "Enjoy 100% full metal value during lifetime buyback and jewelry exchange policies at Atulya, calculated dynamically using live market codes at receipt." }
+                  { title: "24K Gold vs 22K Gold", desc: "24 Karat is 99.9% pure gold, mostly used for gold coins or bars. 22 Karat is 91.6% pure gold mixed with small alloys, which is perfect for making strong wedding jewelry." },
+                  { title: "BIS 916 Hallmark Stamp", desc: "Every piece of our gold has a laser hallmark stamp from the government (Bureau of Indian Standards) showing its exact purity. This protects your gold's resale value." },
+                  { title: "100% Easy Buyback", desc: "Get 100% current market value of the gold whenever you want to sell or exchange your Atulya jewelry in the future. No hidden charges." }
                 ].map((rule, idx) => (
                   <div key={idx} className="space-y-1">
                     <h4 className="text-xs font-bold text-neutral-800">{rule.title}</h4>
@@ -422,7 +422,7 @@ export default function GoldCalculator({ onClose, goldRates, isPage = false, onB
             {/* Saved Estimates Stack */}
             {savedQuotes.length > 0 && (
               <div className="bg-white rounded-3xl p-5 border border-neutral-150/70 shadow-sm space-y-3">
-                <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block">Saved Quotation Records</span>
+                <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block">Saved Estimates</span>
                 <div className="space-y-2">
                   {savedQuotes.map((quote) => (
                     <div key={quote.id} className="flex justify-between items-center p-3 bg-neutral-50 rounded-xl border border-neutral-150/50">

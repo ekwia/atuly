@@ -10,15 +10,15 @@ interface AIConsultantProps {
 }
 
 const QUICK_PROMPTS = [
-  "Suggest a pure gold coin for wealth investment",
-  "Explain GIA vs IGI diamond certification standards",
-  "Suggest a diamond bridal necklace under ₹5,00,000",
-  "Find a contemporary 22K gold ring for daily wear"
+  "Which gold coin is best for investment?",
+  "What is the difference between GIA and IGI diamonds?",
+  "Show me diamond necklaces under 5 Lakhs",
+  "Show me daily wear gold rings"
 ];
 
 const EXPERT_ADVISORS = [
-  { name: "Siddharth Sen", role: "Chief Gemologist & Diamond Grader", status: "Active in Studio", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&h=120&q=80" },
-  { name: "Priya Malhotra", role: "Heritage Bridal Jewelry Advisory", status: "Active in Studio", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&h=120&q=80" }
+  { name: "Siddharth Sen", role: "Diamond & Gem Expert", status: "Active in Shop", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&h=120&q=80" },
+  { name: "Priya Malhotra", role: "Bridal Design Expert", status: "Active in Shop", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&h=120&q=80" }
 ];
 
 export default function AIConsultant({ onClose, isPage = false, onBackToHome }: AIConsultantProps) {
@@ -26,7 +26,7 @@ export default function AIConsultant({ onClose, isPage = false, onBackToHome }: 
     {
       id: "welcome",
       role: "model",
-      content: "Namaste! Welcome to Atulya Royal Consultants. 🌟 I am your dedicated AI Luxury Concierge and Gemologist. \n\nI am certified to assist you with gold asset allocation, diamond cuts and color grading, customizing bridal designs, and calculating real-time metal valuations. How may I guide your exquisite collection today?",
+      content: "Namaste! Welcome to Atulya Gold. 🌟 I am your AI assistant here to help you. \n\nI can help you check gold rates, understand diamond quality (like carat or cut), choose the best wedding jewelry, or answer any other questions. How can I help you today?",
       timestamp: new Date()
     }
   ]);
@@ -102,13 +102,13 @@ export default function AIConsultant({ onClose, isPage = false, onBackToHome }: 
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-gold-dark font-black text-xs uppercase tracking-widest">
               <Sparkles className="w-4 h-4" />
-              <span>Elite Concierge Desk</span>
+              <span>Atulya AI Help Desk</span>
             </div>
             <h1 className="font-serif font-black text-2xl md:text-3xl text-neutral-900 tracking-tight">
-              Atulya AI Luxury Concierge
+              Atulya AI Assistant
             </h1>
             <p className="text-xs text-neutral-500 max-w-2xl">
-              Interact in real-time with our advanced AI Gemologist and investment consultant. Receive personalized advisory on certified solitaires, legacy polki craftsmanship, and bullion assets.
+              Chat with our friendly AI jewelry assistant. Ask any questions about gold rates, diamonds, custom designs, or care tips!
             </p>
           </div>
           {onBackToHome && (
@@ -118,7 +118,7 @@ export default function AIConsultant({ onClose, isPage = false, onBackToHome }: 
               className="inline-flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-850 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs self-start md:self-center"
             >
               <ArrowLeft className="w-4 h-4 text-gold" />
-              <span>Back to Master Catalog</span>
+              <span>Back to Jewelry Catalog</span>
             </button>
           )}
         </div>
@@ -130,8 +130,8 @@ export default function AIConsultant({ onClose, isPage = false, onBackToHome }: 
             {/* Advisors Card */}
             <div className="bg-white rounded-3xl p-5 border border-neutral-150/70 shadow-sm space-y-4">
               <div>
-                <span className="text-[9px] font-black text-gold-dark uppercase tracking-widest block">Consultation Room</span>
-                <h3 className="font-serif font-black text-sm text-neutral-900 mt-0.5">Active Studio Specialists</h3>
+                <span className="text-[9px] font-black text-gold-dark uppercase tracking-widest block">Support Team</span>
+                <h3 className="font-serif font-black text-sm text-neutral-900 mt-0.5">Our Store Experts</h3>
               </div>
               <div className="space-y-4">
                 {EXPERT_ADVISORS.map((adv, idx) => (
@@ -156,8 +156,8 @@ export default function AIConsultant({ onClose, isPage = false, onBackToHome }: 
             {/* Diamond Purity & Trust Card */}
             <div className="bg-white rounded-3xl p-5 border border-neutral-150/70 shadow-sm space-y-4">
               <div>
-                <span className="text-[9px] font-black text-neutral-400 uppercase tracking-widest block">Buyer Reference Guide</span>
-                <h3 className="font-serif font-black text-sm text-neutral-900 mt-0.5">The Diamond Four C's</h3>
+                <span className="text-[9px] font-black text-neutral-400 uppercase tracking-widest block">Diamond Purity Guide</span>
+                <h3 className="font-serif font-black text-sm text-neutral-900 mt-0.5">Learn About Diamonds</h3>
               </div>
               <div className="grid grid-cols-2 gap-2 text-center">
                 {[
@@ -173,15 +173,15 @@ export default function AIConsultant({ onClose, isPage = false, onBackToHome }: 
                 ))}
               </div>
               <p className="text-[9.5px] text-neutral-500 leading-normal font-sans text-center">
-                All diamonds from Atulya Jewelers carry individual authentication dossiers from IGI or GIA laboratories.
+                All our diamonds come with certified quality cards from trusted labs like IGI or GIA.
               </p>
             </div>
 
             {/* Quick Suggestions Cards */}
             <div className="bg-white rounded-3xl p-5 border border-neutral-150/70 shadow-sm space-y-3.5 flex-1">
               <div>
-                <span className="text-[9px] font-black text-neutral-400 uppercase tracking-widest block">Suggested Conversations</span>
-                <h3 className="font-serif font-black text-sm text-neutral-900 mt-0.5">Instant Inquiries</h3>
+                <span className="text-[9px] font-black text-neutral-400 uppercase tracking-widest block">Quick Questions</span>
+                <h3 className="font-serif font-black text-sm text-neutral-900 mt-0.5">Ask our AI</h3>
               </div>
               <div className="flex flex-col gap-2">
                 {QUICK_PROMPTS.map((prompt, index) => (
@@ -208,13 +208,13 @@ export default function AIConsultant({ onClose, isPage = false, onBackToHome }: 
                   <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-neutral-950" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-white tracking-wide">Atulya AI Concierge Lounge</h3>
-                  <p className="text-[9px] text-neutral-400">Under sovereign Hallmark & IGI diamond compliance</p>
+                  <h3 className="text-xs font-bold text-white tracking-wide">Chat with Atulya AI</h3>
+                  <p className="text-[9px] text-neutral-400">Ready to help you find pure gold and certified diamonds</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                <span className="text-[9px] text-neutral-400 font-mono font-bold uppercase tracking-wider">Live Secure Connection</span>
+                <span className="text-[9px] text-neutral-400 font-mono font-bold uppercase tracking-wider">Active Now</span>
               </div>
             </div>
 

@@ -23,7 +23,7 @@ export default function ProductCard({
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const shareUrl = `${window.location.origin}${window.location.pathname}?product=${product.id}`;
+    const shareUrl = `${window.location.origin}${window.location.pathname}#product=${product.id}`;
     navigator.clipboard.writeText(shareUrl).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -120,7 +120,13 @@ export default function ProductCard({
               </button>
               <button
                 id={`add-to-cart-list-${product.id}`}
-                onClick={() => onAddToCart(product)}
+                onClick={() => {
+                  if ((product.customOptionLabel && product.customOptionValues) || (product.customOptionLabel2 && product.customOptionValues2) || (product.customOptionLabel3 && product.customOptionValues3)) {
+                    onOpenQuickView(product);
+                  } else {
+                    onAddToCart(product);
+                  }
+                }}
                 className="h-8 px-3.5 rounded-full bg-gold hover:bg-gold-dark text-white flex items-center gap-1.5 text-[10px] sm:text-xs font-bold transition-all duration-300 hover:shadow-md hover:shadow-gold/15 hover:-translate-y-0.5 cursor-pointer"
               >
                 <ShoppingCart className="w-3.5 h-3.5" />
@@ -155,7 +161,7 @@ export default function ProductCard({
           className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-108"
           referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 bg-neutral-900/20 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
+        <div className="absolute inset-0 bg-neutral-900/20 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2">
           <button
             id={`share-btn-grid-${product.id}`}
             onClick={handleShare}
@@ -170,7 +176,7 @@ export default function ProductCard({
           </button>
           <button
             id={`quick-view-btn-${product.id}`}
-            onClick={() => onOpenQuickView(product)}
+            onClick={(e) => { e.stopPropagation(); onOpenQuickView(product); }}
             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white hover:bg-gold hover:text-white text-neutral-800 flex items-center justify-center transition-all duration-300 shadow-md transform translate-y-2 group-hover/card:translate-y-0 cursor-pointer delay-75"
             title="Quick View"
           >
@@ -178,7 +184,14 @@ export default function ProductCard({
           </button>
           <button
             id={`add-to-cart-btn-${product.id}`}
-            onClick={() => onAddToCart(product)}
+            onClick={(e) => {
+              e.stopPropagation();
+              if ((product.customOptionLabel && product.customOptionValues) || (product.customOptionLabel2 && product.customOptionValues2) || (product.customOptionLabel3 && product.customOptionValues3)) {
+                onOpenQuickView(product);
+              } else {
+                onAddToCart(product);
+              }
+            }}
             className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white hover:bg-gold hover:text-white text-neutral-800 flex items-center justify-center transition-all duration-300 shadow-md transform translate-y-2 group-hover/card:translate-y-0 delay-150 cursor-pointer"
             title="Add to Cart"
           >

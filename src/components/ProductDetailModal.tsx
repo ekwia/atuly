@@ -12,9 +12,19 @@ interface ProductDetailModalProps {
 export default function ProductDetailModal({ product, onClose, onAddToCart }: ProductDetailModalProps) {
   const [selectedSize, setSelectedSize] = useState<string>("Standard");
   const [copiedShare, setCopiedShare] = useState<boolean>(false);
+  const [selectedCustomOption, setSelectedCustomOption] = useState<string>("");
+  const [customOptionError, setCustomOptionError] = useState<boolean>(false);
+  const [selectedCustomOption2, setSelectedCustomOption2] = useState<string>("");
+  const [customOptionError2, setCustomOptionError2] = useState<boolean>(false);
+  const [selectedCustomOption3, setSelectedCustomOption3] = useState<string>("");
+  const [customOptionError3, setCustomOptionError3] = useState<boolean>(false);
+  const [selectedImage, setSelectedImage] = useState<string>("");
+
+  const currentImage = selectedImage || product.image;
+  const allImages = [product.image, ...(product.images || [])].filter(Boolean);
 
   const handleShare = () => {
-    const shareUrl = `${window.location.origin}${window.location.pathname}?product=${product.id}`;
+    const shareUrl = `${window.location.origin}${window.location.pathname}#product=${product.id}`;
     navigator.clipboard.writeText(shareUrl).then(() => {
       setCopiedShare(true);
       setTimeout(() => setCopiedShare(false), 2000);
@@ -54,17 +64,36 @@ export default function ProductDetailModal({ product, onClose, onAddToCart }: Pr
         <div className="flex-1 overflow-y-auto">
           <div className="grid grid-cols-1 md:grid-cols-2">
             {/* Image section */}
-            <div className="h-64 md:h-full bg-neutral-50 relative min-h-[300px]">
-              <img
-                src={product.image}
-                alt={product.title}
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-              {product.badge && (
-                <span className="absolute top-4 left-4 bg-gold text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-md">
-                  {product.badge}
-                </span>
+            <div className="bg-neutral-50 flex flex-col justify-between border-r border-neutral-100">
+              <div className="h-64 md:h-96 relative overflow-hidden bg-slate-50 flex items-center justify-center">
+                <img
+                  src={currentImage}
+                  alt={product.title}
+                  className="w-full h-full object-cover transition-all duration-350"
+                  referrerPolicy="no-referrer"
+                />
+                {product.badge && (
+                  <span className="absolute top-4 left-4 bg-gold text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-md z-10">
+                    {product.badge}
+                  </span>
+                )}
+              </div>
+
+              {allImages.length > 1 && (
+                <div className="p-3 bg-neutral-100/50 border-t border-neutral-200 flex gap-2 overflow-x-auto justify-center">
+                  {allImages.map((img, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setSelectedImage(img)}
+                      className={`w-12 h-12 rounded-lg overflow-hidden border-2 transition-all cursor-pointer flex-shrink-0 ${
+                        currentImage === img ? "border-gold scale-105 shadow-xs" : "border-transparent hover:border-neutral-300"
+                      }`}
+                    >
+                      <img src={img} alt={`Thumb ${idx + 1}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 
@@ -155,6 +184,121 @@ export default function ProductDetailModal({ product, onClose, onAddToCart }: Pr
                 </div>
               </div>
 
+              {/* Custom Selector Options */}
+              {((product.customOptionLabel && product.customOptionValues) ||
+                (product.customOptionLabel2 && product.customOptionValues2) ||
+                (product.customOptionLabel3 && product.customOptionValues3)) && (
+                <div className="space-y-3 pt-2 border-t border-neutral-100">
+                  {/* Option 1 */}
+                  {product.customOptionLabel && product.customOptionValues && (
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-bold text-neutral-800 flex items-center justify-between">
+                        <span>{product.customOptionLabel} <span className="text-rose-500">*</span></span>
+                        {selectedCustomOption && (
+                          <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded font-mono">
+                            {selectedCustomOption}
+                          </span>
+                        )}
+                      </h4>
+                      <select
+                        value={selectedCustomOption}
+                        onChange={(e) => {
+                          setSelectedCustomOption(e.target.value);
+                          setCustomOptionError(false);
+                        }}
+                        className={`w-full bg-white border rounded-xl p-2.5 text-xs font-bold focus:outline-none transition-all cursor-pointer ${
+                          customOptionError
+                            ? "border-rose-400 bg-rose-50/20 text-rose-700 animate-pulse"
+                            : "border-neutral-200 focus:border-amber-500"
+                        }`}
+                      >
+                        <option value="">-- Choose {product.customOptionLabel} --</option>
+                        {product.customOptionValues.split(",").map(v => v.trim()).filter(Boolean).map(val => (
+                          <option key={val} value={val}>{val}</option>
+                        ))}
+                      </select>
+                      {customOptionError && (
+                        <p className="text-[9px] text-rose-600 font-bold flex items-center gap-1">
+                          <span>⚠️ Please choose a {product.customOptionLabel} before adding!</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Option 2 */}
+                  {product.customOptionLabel2 && product.customOptionValues2 && (
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-bold text-neutral-800 flex items-center justify-between">
+                        <span>{product.customOptionLabel2} <span className="text-rose-500">*</span></span>
+                        {selectedCustomOption2 && (
+                          <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded font-mono">
+                            {selectedCustomOption2}
+                          </span>
+                        )}
+                      </h4>
+                      <select
+                        value={selectedCustomOption2}
+                        onChange={(e) => {
+                          setSelectedCustomOption2(e.target.value);
+                          setCustomOptionError2(false);
+                        }}
+                        className={`w-full bg-white border rounded-xl p-2.5 text-xs font-bold focus:outline-none transition-all cursor-pointer ${
+                          customOptionError2
+                            ? "border-rose-400 bg-rose-50/20 text-rose-700 animate-pulse"
+                            : "border-neutral-200 focus:border-amber-500"
+                        }`}
+                      >
+                        <option value="">-- Choose {product.customOptionLabel2} --</option>
+                        {product.customOptionValues2.split(",").map(v => v.trim()).filter(Boolean).map(val => (
+                          <option key={val} value={val}>{val}</option>
+                        ))}
+                      </select>
+                      {customOptionError2 && (
+                        <p className="text-[9px] text-rose-600 font-bold flex items-center gap-1">
+                          <span>⚠️ Please choose a {product.customOptionLabel2} before adding!</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Option 3 */}
+                  {product.customOptionLabel3 && product.customOptionValues3 && (
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-bold text-neutral-800 flex items-center justify-between">
+                        <span>{product.customOptionLabel3} <span className="text-rose-500">*</span></span>
+                        {selectedCustomOption3 && (
+                          <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded font-mono">
+                            {selectedCustomOption3}
+                          </span>
+                        )}
+                      </h4>
+                      <select
+                        value={selectedCustomOption3}
+                        onChange={(e) => {
+                          setSelectedCustomOption3(e.target.value);
+                          setCustomOptionError3(false);
+                        }}
+                        className={`w-full bg-white border rounded-xl p-2.5 text-xs font-bold focus:outline-none transition-all cursor-pointer ${
+                          customOptionError3
+                            ? "border-rose-400 bg-rose-50/20 text-rose-700 animate-pulse"
+                            : "border-neutral-200 focus:border-amber-500"
+                        }`}
+                      >
+                        <option value="">-- Choose {product.customOptionLabel3} --</option>
+                        {product.customOptionValues3.split(",").map(v => v.trim()).filter(Boolean).map(val => (
+                          <option key={val} value={val}>{val}</option>
+                        ))}
+                      </select>
+                      {customOptionError3 && (
+                        <p className="text-[9px] text-rose-600 font-bold flex items-center gap-1">
+                          <span>⚠️ Please choose a {product.customOptionLabel3} before adding!</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Credentials / Promises */}
               <div className="grid grid-cols-3 gap-2 pt-2 text-center text-[10px] text-neutral-600">
                 <div className="flex flex-col items-center gap-1 bg-neutral-50 p-2.5 rounded-xl">
@@ -201,7 +345,43 @@ export default function ProductDetailModal({ product, onClose, onAddToCart }: Pr
           <button
             id="add-to-cart-detail-modal"
             onClick={() => {
-              onAddToCart(product);
+              let hasErr = false;
+              if (product.customOptionLabel && product.customOptionValues && !selectedCustomOption) {
+                setCustomOptionError(true);
+                hasErr = true;
+              }
+              if (product.customOptionLabel2 && product.customOptionValues2 && !selectedCustomOption2) {
+                setCustomOptionError2(true);
+                hasErr = true;
+              }
+              if (product.customOptionLabel3 && product.customOptionValues3 && !selectedCustomOption3) {
+                setCustomOptionError3(true);
+                hasErr = true;
+              }
+              if (hasErr) return;
+              
+              let updatedProduct = product;
+              const suffixParts = [];
+              if (selectedSize) {
+                suffixParts.push(`Size: ${selectedSize}`);
+              }
+              if (product.customOptionLabel && selectedCustomOption) {
+                suffixParts.push(`${product.customOptionLabel}: ${selectedCustomOption}`);
+              }
+              if (product.customOptionLabel2 && selectedCustomOption2) {
+                suffixParts.push(`${product.customOptionLabel2}: ${selectedCustomOption2}`);
+              }
+              if (product.customOptionLabel3 && selectedCustomOption3) {
+                suffixParts.push(`${product.customOptionLabel3}: ${selectedCustomOption3}`);
+              }
+              
+              if (suffixParts.length > 0) {
+                updatedProduct = {
+                  ...product,
+                  title: `${product.title} (${suffixParts.join(", ")})`
+                };
+              }
+              onAddToCart(updatedProduct);
               onClose();
             }}
             className="px-6 py-3 rounded-xl bg-gold hover:bg-gold-dark text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-lg shadow-gold/20 transition-all hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"

@@ -1,10 +1,10 @@
 {
-  "projectId": "axiomatic-smile-607pf",
-  "appId": "1:377825050042:web:1a6e81bbd42945c2b3b183",
-  "apiKey": "AIzaSyCKd8tX9_yU7vIICYt0_ilLb_p7Y40fF5M",
-  "authDomain": "axiomatic-smile-607pf.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-atulyajewelers-31611d17-3baa-4cd7-8c83-6136b61819c8",
-  "storageBucket": "axiomatic-smile-607pf.firebasestorage.app",
-  "messagingSenderId": "377825050042",
+  "projectId": "gen-lang-client-0178866138",
+  "appId": "1:107965391455:web:725ceaa7b7b1feaba5f1ea",
+  "apiKey": "AIzaSyB9IzJQZZiUuCM-kYW-hkNBJ8wG463Lekg",
+  "authDomain": "gen-lang-client-0178866138.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "gen-lang-client-0178866138.firebasestorage.app",
+  "messagingSenderId": "107965391455",
   "measurementId": ""
 }

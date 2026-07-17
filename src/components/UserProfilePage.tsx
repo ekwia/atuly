@@ -1035,10 +1035,10 @@ export default function UserProfilePage({
                 <div className="border-b border-neutral-100 pb-3">
                   <h2 className="font-serif font-black text-xl text-neutral-950 flex items-center gap-2">
                     <Award className="w-5 h-5 text-gold-dark" />
-                    <span>Loyalty Ledger & Holdings</span>
+                    <span>Membership & Gold Savings</span>
                   </h2>
                   <p className="text-xs text-neutral-400 mt-1">
-                    Track your Atulya Sovereign Patron tier, lifetime loyalty ledger points, and current value of active metal investments.
+                    Track your Atulya gold tier, membership points, and the current value of your gold savings.
                   </p>
                 </div>
 
@@ -1051,21 +1051,21 @@ export default function UserProfilePage({
                     <div className="space-y-3 relative z-10">
                       <div className="flex justify-between items-start">
                         <div className="space-y-0.5">
-                          <span className="text-[8px] font-black tracking-widest text-gold uppercase">PATRON MEMBERSHIP</span>
-                          <h3 className="font-serif font-black text-lg text-white">Sovereign Crown Elite</h3>
+                          <span className="text-[8px] font-black tracking-widest text-gold uppercase">MEMBERSHIP LEVEL</span>
+                          <h3 className="font-serif font-black text-lg text-white">Sovereign Gold Elite</h3>
                         </div>
                         <span className="text-[8px] font-black tracking-widest bg-gold/15 border border-gold/40 text-gold px-2.5 py-1 rounded-full uppercase animate-pulse">
-                          ROYAL LEVEL 4
+                          GOLD LEVEL 4
                         </span>
                       </div>
 
                       <div className="pt-2">
-                        <span className="block text-[8px] text-neutral-400 uppercase tracking-widest">ACTIVE LOYALTY BALANCE</span>
+                        <span className="block text-[8px] text-neutral-400 uppercase tracking-widest">YOUR MEMBERSHIP POINTS</span>
                         <div className="flex items-baseline gap-1.5 mt-0.5">
                           <span className="font-serif font-black text-3xl text-gold-light">
                             {userOrders.length > 0 ? userOrders.length * 1250 + 250 : 250}
                           </span>
-                          <span className="text-[10px] font-bold text-neutral-400">Patron Points</span>
+                          <span className="text-[10px] font-bold text-neutral-400">Points</span>
                         </div>
                       </div>
                     </div>
@@ -1073,7 +1073,7 @@ export default function UserProfilePage({
                     {/* Progress Slider */}
                     <div className="space-y-1 relative z-10">
                       <div className="flex justify-between text-[9px] text-neutral-400 font-bold">
-                        <span>Tier Milestone: 5,000 Pts</span>
+                        <span>Next Level Milestone: 5,000 Pts</span>
                         <span className="text-gold">
                           {userOrders.length > 0 ? 5000 - (userOrders.length * 1250 + 250) : 4750} pts to Maharaja Club
                         </span>
@@ -1088,11 +1088,11 @@ export default function UserProfilePage({
 
                     <div className="border-t border-neutral-800 pt-3 flex justify-between items-center text-[9px] text-neutral-400 font-mono relative z-10">
                       <div>
-                        <span className="block text-[7px] text-neutral-500">CREDENTIAL ID</span>
+                        <span className="block text-[7px] text-neutral-500">MEMBER ID</span>
                         <span>AT-PATRON-{currentUser.email.split('@')[0].toUpperCase()}</span>
                       </div>
                       <div className="text-right">
-                        <span className="block text-[7px] text-neutral-500">EXCHANGE VALUE</span>
+                        <span className="block text-[7px] text-neutral-500">DISCOUNT VALUE</span>
                         <span className="text-gold font-bold">₹{userOrders.length > 0 ? (userOrders.length * 1250 + 250) * 2 : 500} Cashable</span>
                       </div>
                     </div>
@@ -1101,10 +1101,10 @@ export default function UserProfilePage({
                   {/* Portfolio Holdings Value calculation Card */}
                   <div className="md:col-span-6 bg-[#FAF8F5] border border-amber-100 p-5 rounded-3xl flex flex-col justify-between space-y-4">
                     <div className="space-y-1.5">
-                      <span className="text-[8px] font-black text-amber-800 tracking-wider uppercase block">✦ ATULYA ASSET SUMMARY</span>
-                      <h3 className="font-serif font-black text-base text-neutral-900">Metal Investment Holdings</h3>
+                      <span className="text-[8px] font-black text-amber-800 tracking-wider uppercase block">✦ YOUR SAVINGS SUMMARY</span>
+                      <h3 className="font-serif font-black text-base text-neutral-900">Your Metal Holdings</h3>
                       <p className="text-[11px] text-neutral-500 leading-relaxed">
-                        An automatic real-time valuation of the gold & silver purchased under this account, based on today's Delhi bullion indexes.
+                        A live calculation of the value of the gold & silver you bought from us, based on today's Delhi market rates.
                       </p>
                     </div>
 

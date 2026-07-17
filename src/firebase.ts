@@ -23,26 +23,31 @@ import {
   signInWithEmailAndPassword,
   updateProfile
 } from "firebase/auth";
-import { Product, Order, Review, User } from "./types";
+import { Product, Order, Review, User, GoldRate, StoreSettings } from "./types";
 import { products as defaultProducts, reviews as defaultReviews } from "./data";
 
 // Firebase credentials from generated configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCKd8tX9_yU7vIICYt0_ilLb_p7Y40fF5M",
-  authDomain: "axiomatic-smile-607pf.firebaseapp.com",
-  projectId: "axiomatic-smile-607pf",
-  storageBucket: "axiomatic-smile-607pf.firebasestorage.app",
-  messagingSenderId: "377825050042",
-  appId: "1:377825050042:web:1a6e81bbd42945c2b3b183"
+  apiKey: "AIzaSyB9IzJQZZiUuCM-kYW-hkNBJ8wG463Lekg",
+  authDomain: "gen-lang-client-0178866138.firebaseapp.com",
+  projectId: "gen-lang-client-0178866138",
+  storageBucket: "gen-lang-client-0178866138.firebasestorage.app",
+  messagingSenderId: "107965391455",
+  appId: "1:107965391455:web:725ceaa7b7b1feaba5f1ea"
 };
 
 // Initialize Firebase App
 const app = initializeApp(firebaseConfig);
 
+// Support both the custom user project (default DB) and current studio environment DB ID
+const databaseId = firebaseConfig.projectId === "gen-lang-client-0178866138"
+  ? "(default)"
+  : "ai-studio-atulyajewelers-31611d17-3baa-4cd7-8c83-6136b61819c8";
+
 // Use the specific firestore database ID provisioned for this applet with forced long polling
 export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true,
-}, "ai-studio-atulyajewelers-31611d17-3baa-4cd7-8c83-6136b61819c8");
+}, databaseId);
 
 // Initialize Firebase Auth
 export const auth = getAuth(app);
@@ -94,8 +99,13 @@ export async function getProductsFromDB(): Promise<Product[]> {
     
     // Sort products by id ascending to keep original ordering
     return productsList.sort((a, b) => a.id - b.id);
-  } catch (error) {
-    console.error("Error fetching products from Firestore:", error);
+  } catch (error: any) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    if (errMsg.toLowerCase().includes("offline") || errMsg.toLowerCase().includes("failed to get document")) {
+      console.warn("Could not fetch products from Firestore because client is offline:", error);
+    } else {
+      console.error("Error fetching products from Firestore:", error);
+    }
     // Fallback to static products in case of error
     return defaultProducts;
   }
@@ -181,8 +191,13 @@ export async function getOrdersFromDB(email?: string): Promise<Order[]> {
     });
     
     return ordersList;
-  } catch (error) {
-    console.error("Error fetching orders from Firestore:", error);
+  } catch (error: any) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    if (errMsg.toLowerCase().includes("offline") || errMsg.toLowerCase().includes("failed to get document")) {
+      console.warn("Could not fetch orders from Firestore because client is offline:", error);
+    } else {
+      console.error("Error fetching orders from Firestore:", error);
+    }
     return [];
   }
 }
@@ -256,8 +271,9 @@ export interface FirestoreErrorInfo {
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errMsg = error instanceof Error ? error.message : String(error);
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errMsg,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
@@ -267,7 +283,11 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   };
-  console.error("Firestore Error: ", JSON.stringify(errInfo));
+  if (errMsg.toLowerCase().includes("offline") || errMsg.toLowerCase().includes("failed to get document")) {
+    console.warn("Firestore Offline Notice: ", JSON.stringify(errInfo));
+  } else {
+    console.error("Firestore Error: ", JSON.stringify(errInfo));
+  }
   throw new Error(JSON.stringify(errInfo));
 }
 
@@ -317,8 +337,13 @@ export async function getReviewsFromDB(productId: number): Promise<Review[]> {
     });
     
     return reviewsList;
-  } catch (error) {
-    console.error(`Error fetching reviews for product ${productId}:`, error);
+  } catch (error: any) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    if (errMsg.toLowerCase().includes("offline") || errMsg.toLowerCase().includes("failed to get document")) {
+      console.warn(`Could not fetch reviews for product ${productId} because client is offline:`, error);
+    } else {
+      console.error(`Error fetching reviews for product ${productId}:`, error);
+    }
     // Return filtered static reviews as fallback
     return defaultReviews.map(r => ({ ...r, productId }));
   }
@@ -384,8 +409,13 @@ export async function getUserProfileFromDB(uid: string): Promise<User | null> {
       return docSnap.data() as User;
     }
     return null;
-  } catch (error) {
-    console.error("Error fetching user profile from Firestore:", error);
+  } catch (error: any) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    if (errMsg.toLowerCase().includes("offline") || errMsg.toLowerCase().includes("failed to get document")) {
+      console.warn("Could not fetch user profile from Firestore because client is offline:", error);
+    } else {
+      console.error("Error fetching user profile from Firestore:", error);
+    }
     return null;
   }
 }
@@ -410,3 +440,55 @@ export async function saveUserProfileToDB(uid: string, userProfile: User): Promi
     throw error;
   }
 }
+
+// --- GOLD RATES & STORE SETTINGS OPERATIONS ---
+const SETTINGS_COLLECTION = "settings";
+
+export async function getGoldRatesFromDB(): Promise<GoldRate | null> {
+  try {
+    const docRef = doc(db, SETTINGS_COLLECTION, "gold_rates");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data() as GoldRate;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching gold rates from Firestore:", error);
+    return null;
+  }
+}
+
+export async function saveGoldRatesToDB(rates: GoldRate): Promise<void> {
+  try {
+    const docRef = doc(db, SETTINGS_COLLECTION, "gold_rates");
+    await setDoc(docRef, rates);
+  } catch (error) {
+    console.error("Error saving gold rates to Firestore:", error);
+    throw error;
+  }
+}
+
+export async function getStoreSettingsFromDB(): Promise<StoreSettings | null> {
+  try {
+    const docRef = doc(db, SETTINGS_COLLECTION, "store_settings");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data() as StoreSettings;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching store settings from Firestore:", error);
+    return null;
+  }
+}
+
+export async function saveStoreSettingsToDB(settings: StoreSettings): Promise<void> {
+  try {
+    const docRef = doc(db, SETTINGS_COLLECTION, "store_settings");
+    await setDoc(docRef, settings);
+  } catch (error) {
+    console.error("Error saving store settings to Firestore:", error);
+    throw error;
+  }
+}
+

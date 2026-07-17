@@ -36,6 +36,25 @@ export default function ProductDetailPage({
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedQuantity, setSelectedQuantity] = useState<number>(1);
   const [sizeError, setSizeError] = useState<boolean>(false);
+  const [customOptionError, setCustomOptionError] = useState<boolean>(false);
+  const [selectedCustomOption, setSelectedCustomOption] = useState<string>("");
+  const [customOptionError2, setCustomOptionError2] = useState<boolean>(false);
+  const [selectedCustomOption2, setSelectedCustomOption2] = useState<string>("");
+  const [customOptionError3, setCustomOptionError3] = useState<boolean>(false);
+  const [selectedCustomOption3, setSelectedCustomOption3] = useState<string>("");
+
+  // Reset customization on product change
+  useEffect(() => {
+    setSelectedSize("");
+    setSelectedCustomOption("");
+    setSelectedCustomOption2("");
+    setSelectedCustomOption3("");
+    setSizeError(false);
+    setCustomOptionError(false);
+    setCustomOptionError2(false);
+    setCustomOptionError3(false);
+    setSelectedQuantity(1);
+  }, [product.id]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -94,7 +113,7 @@ export default function ProductDetailPage({
   }, [addedNotify]);
 
   const handleShareClick = () => {
-    const shareUrl = `${window.location.origin}${window.location.pathname}?product=${product.id}`;
+    const shareUrl = `${window.location.origin}${window.location.pathname}#product=${product.id}`;
     navigator.clipboard.writeText(shareUrl).then(() => {
       setSharedNotify(true);
       setTimeout(() => setSharedNotify(false), 2500);
@@ -257,7 +276,33 @@ export default function ProductDetailPage({
       return;
     }
 
-    const titleSuffix = `(${selectedPurity}, ${selectedColor}, Size: ${selectedSize})`;
+    let hasErr = false;
+    if (product.customOptionLabel && product.customOptionValues && !selectedCustomOption) {
+      setCustomOptionError(true);
+      hasErr = true;
+    }
+    if (product.customOptionLabel2 && product.customOptionValues2 && !selectedCustomOption2) {
+      setCustomOptionError2(true);
+      hasErr = true;
+    }
+    if (product.customOptionLabel3 && product.customOptionValues3 && !selectedCustomOption3) {
+      setCustomOptionError3(true);
+      hasErr = true;
+    }
+    if (hasErr) return;
+
+    let optionSuffix = "";
+    if (product.customOptionLabel && selectedCustomOption) {
+      optionSuffix += `, ${product.customOptionLabel}: ${selectedCustomOption}`;
+    }
+    if (product.customOptionLabel2 && selectedCustomOption2) {
+      optionSuffix += `, ${product.customOptionLabel2}: ${selectedCustomOption2}`;
+    }
+    if (product.customOptionLabel3 && selectedCustomOption3) {
+      optionSuffix += `, ${product.customOptionLabel3}: ${selectedCustomOption3}`;
+    }
+
+    const titleSuffix = `(${selectedPurity}, ${selectedColor}, Size: ${selectedSize}${optionSuffix})`;
     const customizedProduct = {
       ...product,
       title: `${product.title} ${titleSuffix}`,
@@ -274,11 +319,17 @@ export default function ProductDetailPage({
     setTimeout(() => setAddedNotify(false), 2500);
   };
 
-  const thumbnails = [
+  const baseThumbnails = [
     { name: "Saffron Studio", url: product.image, desc: "Editorial focus lighting setup" },
+    ...(product.images || []).map((imgUrl: string, idx: number) => ({
+      name: `Artisan View ${idx + 1}`,
+      url: imgUrl,
+      desc: "Additional premium angle view details"
+    })),
     { name: "Facets Zoom 10x", url: product.image, desc: "Luster clarity verification detail", css: "scale-[1.65] origin-center filter contrast-[1.06]" },
     { name: "Packaging Box", url: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=600&q=80", desc: "Velvet gift box presentation" }
   ];
+  const thumbnails = baseThumbnails.filter(t => t.url);
 
   const rawBaseWeight = parseFloat(product.attributes.find(a => a.label.includes("Weight"))?.value || "6.5g") || 6.5;
   const currentWeight = rawBaseWeight.toFixed(2);
@@ -1392,7 +1443,7 @@ export default function ProductDetailPage({
                       <div className="flex justify-between items-center">
                         <h4 className="text-[10px] sm:text-xs font-black text-neutral-800 uppercase tracking-[0.15em] flex items-center gap-1.5">
                           <Gem className="w-3.5 h-3.5 text-amber-600" />
-                          <span>Select Gold Purity Standard</span>
+                          <span>Select Option</span>
                         </h4>
                         <span className="text-[9px] font-bold text-amber-700 font-mono uppercase bg-amber-50 px-2 py-0.5 rounded">
                           {selectedPurity} Standard
@@ -1461,6 +1512,148 @@ export default function ProductDetailPage({
                             </button>
                           ))}
                         </div>
+                      </div>
+                    )}
+
+                    {/* Custom Select Options Feature */}
+                    {((product.customOptionLabel && product.customOptionValues) ||
+                      (product.customOptionLabel2 && product.customOptionValues2) ||
+                      (product.customOptionLabel3 && product.customOptionValues3)) && (
+                      <div className="space-y-3.5 pt-3 border-t border-neutral-150">
+                        {/* Option 1 */}
+                        {product.customOptionLabel && product.customOptionValues && (
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <h4 className="text-[10px] sm:text-xs font-black text-neutral-800 uppercase tracking-[0.15em] flex items-center gap-1.5">
+                                <Gem className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+                                <span>{product.customOptionLabel}</span>
+                              </h4>
+                              {selectedCustomOption ? (
+                                <span className="text-[9px] font-bold text-emerald-700 font-mono uppercase bg-emerald-50 px-2 py-0.5 rounded">
+                                  {selectedCustomOption}
+                                </span>
+                              ) : (
+                                <span className="text-[9px] font-bold text-rose-600 font-mono uppercase bg-rose-50 px-2 py-0.5 rounded">
+                                  Required
+                                </span>
+                              )}
+                            </div>
+                            <div className="relative">
+                              <select
+                                value={selectedCustomOption}
+                                onChange={(e) => {
+                                  setSelectedCustomOption(e.target.value);
+                                  setCustomOptionError(false);
+                                }}
+                                className={`w-full bg-white border rounded-xl p-3 text-xs font-bold focus:outline-none transition-all cursor-pointer shadow-xs ${
+                                  customOptionError 
+                                    ? "border-rose-400 bg-rose-50/20 text-rose-700 animate-pulse font-bold" 
+                                    : "border-neutral-200 focus:border-amber-500 text-slate-800"
+                                }`}
+                              >
+                                <option value="">-- Choose {product.customOptionLabel} --</option>
+                                {product.customOptionValues.split(",").map(v => v.trim()).filter(Boolean).map(val => (
+                                  <option key={val} value={val}>{val}</option>
+                                ))}
+                              </select>
+                            </div>
+                            {customOptionError && (
+                              <p className="text-[9px] text-rose-600 font-bold flex items-center gap-1">
+                                <span>⚠️ Please choose a {product.customOptionLabel} before adding to bag!</span>
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Option 2 */}
+                        {product.customOptionLabel2 && product.customOptionValues2 && (
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <h4 className="text-[10px] sm:text-xs font-black text-neutral-800 uppercase tracking-[0.15em] flex items-center gap-1.5">
+                                <Gem className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+                                <span>{product.customOptionLabel2}</span>
+                              </h4>
+                              {selectedCustomOption2 ? (
+                                <span className="text-[9px] font-bold text-emerald-700 font-mono uppercase bg-emerald-50 px-2 py-0.5 rounded">
+                                  {selectedCustomOption2}
+                                </span>
+                              ) : (
+                                <span className="text-[9px] font-bold text-rose-600 font-mono uppercase bg-rose-50 px-2 py-0.5 rounded">
+                                  Required
+                                </span>
+                              )}
+                            </div>
+                            <div className="relative">
+                              <select
+                                value={selectedCustomOption2}
+                                onChange={(e) => {
+                                  setSelectedCustomOption2(e.target.value);
+                                  setCustomOptionError2(false);
+                                }}
+                                className={`w-full bg-white border rounded-xl p-3 text-xs font-bold focus:outline-none transition-all cursor-pointer shadow-xs ${
+                                  customOptionError2 
+                                    ? "border-rose-400 bg-rose-50/20 text-rose-700 animate-pulse font-bold" 
+                                    : "border-neutral-200 focus:border-amber-500 text-slate-800"
+                                }`}
+                              >
+                                <option value="">-- Choose {product.customOptionLabel2} --</option>
+                                {product.customOptionValues2.split(",").map(v => v.trim()).filter(Boolean).map(val => (
+                                  <option key={val} value={val}>{val}</option>
+                                ))}
+                              </select>
+                            </div>
+                            {customOptionError2 && (
+                              <p className="text-[9px] text-rose-600 font-bold flex items-center gap-1">
+                                <span>⚠️ Please choose a {product.customOptionLabel2} before adding to bag!</span>
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Option 3 */}
+                        {product.customOptionLabel3 && product.customOptionValues3 && (
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <h4 className="text-[10px] sm:text-xs font-black text-neutral-800 uppercase tracking-[0.15em] flex items-center gap-1.5">
+                                <Gem className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+                                <span>{product.customOptionLabel3}</span>
+                              </h4>
+                              {selectedCustomOption3 ? (
+                                <span className="text-[9px] font-bold text-emerald-700 font-mono uppercase bg-emerald-50 px-2 py-0.5 rounded">
+                                  {selectedCustomOption3}
+                                </span>
+                              ) : (
+                                <span className="text-[9px] font-bold text-rose-600 font-mono uppercase bg-rose-50 px-2 py-0.5 rounded">
+                                  Required
+                                </span>
+                              )}
+                            </div>
+                            <div className="relative">
+                              <select
+                                value={selectedCustomOption3}
+                                onChange={(e) => {
+                                  setSelectedCustomOption3(e.target.value);
+                                  setCustomOptionError3(false);
+                                }}
+                                className={`w-full bg-white border rounded-xl p-3 text-xs font-bold focus:outline-none transition-all cursor-pointer shadow-xs ${
+                                  customOptionError3 
+                                    ? "border-rose-400 bg-rose-50/20 text-rose-700 animate-pulse font-bold" 
+                                    : "border-neutral-200 focus:border-amber-500 text-slate-800"
+                                }`}
+                              >
+                                <option value="">-- Choose {product.customOptionLabel3} --</option>
+                                {product.customOptionValues3.split(",").map(v => v.trim()).filter(Boolean).map(val => (
+                                  <option key={val} value={val}>{val}</option>
+                                ))}
+                              </select>
+                            </div>
+                            {customOptionError3 && (
+                              <p className="text-[9px] text-rose-600 font-bold flex items-center gap-1">
+                                <span>⚠️ Please choose a {product.customOptionLabel3} before adding to bag!</span>
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -2138,7 +2331,7 @@ export default function ProductDetailPage({
               {/* Gold Purity Selector */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block">2. Gold Purity Standard</span>
+                  <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block">2. Select Option</span>
                   <span className="text-[10px] font-extrabold text-neutral-800 font-mono">{selectedPurity}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -2237,6 +2430,139 @@ export default function ProductDetailPage({
                   </p>
                 )}
               </div>
+
+              {/* Custom Selector Steps in Bottom Sheet */}
+              {((product.customOptionLabel && product.customOptionValues) ||
+                (product.customOptionLabel2 && product.customOptionValues2) ||
+                (product.customOptionLabel3 && product.customOptionValues3)) && (
+                <div className="space-y-4">
+                  {/* Option 1 */}
+                  {product.customOptionLabel && product.customOptionValues && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block">
+                          {product.customOptionLabel} (Required)
+                        </span>
+                        {selectedCustomOption ? (
+                          <span className="text-[10px] font-extrabold text-emerald-600 font-mono flex items-center gap-1">
+                            <Check className="w-3 h-3 text-emerald-600" /> {selectedCustomOption}
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-black text-rose-500 uppercase tracking-wider bg-rose-50 px-2 py-0.5 rounded">Required</span>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <select
+                          value={selectedCustomOption}
+                          onChange={(e) => {
+                            setSelectedCustomOption(e.target.value);
+                            setCustomOptionError(false);
+                          }}
+                          className={`w-full bg-white border rounded-xl p-3 text-xs font-bold focus:outline-none text-slate-800 transition-all cursor-pointer shadow-xs ${
+                            customOptionError 
+                              ? "border-rose-400 bg-rose-50/20 text-rose-700 animate-pulse font-bold" 
+                              : "border-neutral-200 focus:border-amber-500"
+                          }`}
+                        >
+                          <option value="">-- Choose {product.customOptionLabel} --</option>
+                          {product.customOptionValues.split(",").map(v => v.trim()).filter(Boolean).map(val => (
+                            <option key={val} value={val}>{val}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {customOptionError && (
+                        <p className="text-[9px] text-rose-600 font-bold flex items-center gap-1 mt-1">
+                          <span>⚠️ Please choose a {product.customOptionLabel} before adding!</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Option 2 */}
+                  {product.customOptionLabel2 && product.customOptionValues2 && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block">
+                          {product.customOptionLabel2} (Required)
+                        </span>
+                        {selectedCustomOption2 ? (
+                          <span className="text-[10px] font-extrabold text-emerald-600 font-mono flex items-center gap-1">
+                            <Check className="w-3 h-3 text-emerald-600" /> {selectedCustomOption2}
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-black text-rose-500 uppercase tracking-wider bg-rose-50 px-2 py-0.5 rounded">Required</span>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <select
+                          value={selectedCustomOption2}
+                          onChange={(e) => {
+                            setSelectedCustomOption2(e.target.value);
+                            setCustomOptionError2(false);
+                          }}
+                          className={`w-full bg-white border rounded-xl p-3 text-xs font-bold focus:outline-none text-slate-800 transition-all cursor-pointer shadow-xs ${
+                            customOptionError2 
+                              ? "border-rose-400 bg-rose-50/20 text-rose-700 animate-pulse font-bold" 
+                              : "border-neutral-200 focus:border-amber-500"
+                          }`}
+                        >
+                          <option value="">-- Choose {product.customOptionLabel2} --</option>
+                          {product.customOptionValues2.split(",").map(v => v.trim()).filter(Boolean).map(val => (
+                            <option key={val} value={val}>{val}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {customOptionError2 && (
+                        <p className="text-[9px] text-rose-600 font-bold flex items-center gap-1 mt-1">
+                          <span>⚠️ Please choose a {product.customOptionLabel2} before adding!</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Option 3 */}
+                  {product.customOptionLabel3 && product.customOptionValues3 && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block">
+                          {product.customOptionLabel3} (Required)
+                        </span>
+                        {selectedCustomOption3 ? (
+                          <span className="text-[10px] font-extrabold text-emerald-600 font-mono flex items-center gap-1">
+                            <Check className="w-3 h-3 text-emerald-600" /> {selectedCustomOption3}
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-black text-rose-500 uppercase tracking-wider bg-rose-50 px-2 py-0.5 rounded">Required</span>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <select
+                          value={selectedCustomOption3}
+                          onChange={(e) => {
+                            setSelectedCustomOption3(e.target.value);
+                            setCustomOptionError3(false);
+                          }}
+                          className={`w-full bg-white border rounded-xl p-3 text-xs font-bold focus:outline-none text-slate-800 transition-all cursor-pointer shadow-xs ${
+                            customOptionError3 
+                              ? "border-rose-400 bg-rose-50/20 text-rose-700 animate-pulse font-bold" 
+                              : "border-neutral-200 focus:border-amber-500"
+                          }`}
+                        >
+                          <option value="">-- Choose {product.customOptionLabel3} --</option>
+                          {product.customOptionValues3.split(",").map(v => v.trim()).filter(Boolean).map(val => (
+                            <option key={val} value={val}>{val}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {customOptionError3 && (
+                        <p className="text-[9px] text-rose-600 font-bold flex items-center gap-1 mt-1">
+                          <span>⚠️ Please choose a {product.customOptionLabel3} before adding!</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Quantity Option */}
               <div className="space-y-2">

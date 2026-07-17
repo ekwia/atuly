@@ -17,6 +17,14 @@ export interface Product {
   badge?: "exclusive" | "new" | "sale" | "limited" | "bestseller" | "trending";
   description: string;
   attributes: ProductAttribute[];
+  section?: "latest" | "popular" | "special";
+  customOptionLabel?: string;
+  customOptionValues?: string;
+  customOptionLabel2?: string;
+  customOptionValues2?: string;
+  customOptionLabel3?: string;
+  customOptionValues3?: string;
+  images?: string[];
 }
 
 export interface CartItem {
@@ -80,3 +88,16 @@ export interface Order {
   createdAt: string;
   paymentStatus: 'Unpaid' | 'Paid' | 'Refunded';
 }
+
+export interface StoreSettings {
+  storeName: string;
+  announcementText: string;
+  announcementCode: string;
+  announcementDiscount: string;
+  contactAddress: string;
+  contactPhone: string;
+  contactEmail: string;
+  showroomHours: string;
+  aboutStory: string;
+}
+

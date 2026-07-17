@@ -129,5 +129,11 @@ service cloud.firestore {
       allow delete: if isBoutiqueAdmin();
     }
 
+    // Settings collection (Read: Everyone; Write: Admin only)
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isBoutiqueAdmin();
+    }
+
   }
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Search,
   ShoppingBag,
@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { products, reviews } from "./data";
-import { Product, CartItem, GoldRate, User, Order } from "./types";
+import { Product, CartItem, GoldRate, User, Order, StoreSettings } from "./types";
 import { 
   getProductsFromDB, 
   getOrdersFromDB, 
@@ -36,6 +36,10 @@ import {
   addOrderToDB, 
   updateOrderStatusInDB, 
   updateOrderPaymentStatusInDB,
+  getGoldRatesFromDB,
+  saveGoldRatesToDB,
+  getStoreSettingsFromDB,
+  saveStoreSettingsToDB,
   auth
 } from "./firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -84,6 +88,13 @@ const categoryMetadata: Record<string, { image: string; displayName: string }> =
   }
 };
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallbackValue: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallbackValue), timeoutMs))
+  ]);
+}
+
 export default function App() {
   // Navigation & Page views
   const [activeTab, setActiveTab] = useState<'home' | 'about' | 'search' | 'category' | 'cart' | 'admin' | 'calculator' | 'consultant' | 'profile'>('home');
@@ -102,6 +113,7 @@ export default function App() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [trackOrdersOpen, setTrackOrdersOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const initialParseDone = useRef(false);
 
   // User state
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
@@ -126,7 +138,7 @@ export default function App() {
 
         try {
           const { getUserProfileFromDB, saveUserProfileToDB } = await import("./firebase");
-          let userProfile = await getUserProfileFromDB(firebaseUser.uid);
+          let userProfile = await withTimeout(getUserProfileFromDB(firebaseUser.uid), 1500, null);
           
           if (!userProfile) {
             userProfile = {
@@ -135,7 +147,7 @@ export default function App() {
               picture: firebaseUser.photoURL || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(email)}`,
               role: isAdmin ? "admin" : "user"
             };
-            await saveUserProfileToDB(firebaseUser.uid, userProfile);
+            await withTimeout(saveUserProfileToDB(firebaseUser.uid, userProfile), 1500, undefined);
           }
           
           setCurrentUser(userProfile);
@@ -183,10 +195,10 @@ export default function App() {
     }
   });
 
-  // Load products from Firestore on mount with background sync
+  // Load products, gold rates, and store settings from Firestore on mount with background sync
   useEffect(() => {
     let active = true;
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
         const dbProducts = await getProductsFromDB();
         if (active && dbProducts && dbProducts.length > 0) {
@@ -195,8 +207,26 @@ export default function App() {
       } catch (err) {
         console.error("Failed to load products from Firestore on startup:", err);
       }
+
+      try {
+        const dbGoldRates = await getGoldRatesFromDB();
+        if (active && dbGoldRates) {
+          setGoldRates(dbGoldRates);
+        }
+      } catch (err) {
+        console.error("Failed to load gold rates from Firestore on startup:", err);
+      }
+
+      try {
+        const dbStoreSettings = await getStoreSettingsFromDB();
+        if (active && dbStoreSettings) {
+          setStoreSettings(dbStoreSettings);
+        }
+      } catch (err) {
+        console.error("Failed to load store settings from Firestore on startup:", err);
+      }
     };
-    fetchProducts();
+    fetchData();
     return () => {
       active = false;
     };
@@ -206,17 +236,34 @@ export default function App() {
   useEffect(() => {
     const parseUrlProduct = () => {
       const params = new URLSearchParams(window.location.search);
-      const productIdParam = params.get("product");
+      let productIdParam = params.get("product");
+
+      // Robust fallback to hash search
+      if (!productIdParam) {
+        const hash = window.location.hash;
+        if (hash) {
+          const match = hash.match(/product[=/](\d+)/) || hash.match(/#(\d+)/);
+          if (match) {
+            productIdParam = match[1];
+          }
+        }
+      }
+
       if (productIdParam) {
         const pId = parseInt(productIdParam, 10);
         const found = productsState.find(p => p.id === pId);
         if (found) {
           setSelectedProduct(found);
+          initialParseDone.current = true;
         } else {
-          setSelectedProduct(null);
+          if (productsState.length > 0) {
+            setSelectedProduct(null);
+            initialParseDone.current = true;
+          }
         }
       } else {
         setSelectedProduct(null);
+        initialParseDone.current = true;
       }
     };
 
@@ -224,8 +271,10 @@ export default function App() {
     parseUrlProduct();
 
     window.addEventListener("popstate", parseUrlProduct);
+    window.addEventListener("hashchange", parseUrlProduct);
     return () => {
       window.removeEventListener("popstate", parseUrlProduct);
+      window.removeEventListener("hashchange", parseUrlProduct);
     };
   }, [productsState]);
 
@@ -247,16 +296,24 @@ export default function App() {
 
   // Push URL parameter updates dynamically when selectedProduct changes
   useEffect(() => {
+    if (!initialParseDone.current) {
+      return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const productIdParam = params.get("product");
     
     if (selectedProduct) {
-      if (productIdParam !== String(selectedProduct.id)) {
-        params.set("product", String(selectedProduct.id));
-        const newUrl = `${window.location.pathname}?${params.toString()}`;
-        window.history.pushState({ productId: selectedProduct.id }, "", newUrl);
+      const targetHash = `#product=${selectedProduct.id}`;
+      if (window.location.hash !== targetHash) {
+        window.history.pushState({ productId: selectedProduct.id }, "", targetHash);
       }
     } else {
+      // Clear hash if we had a product in hash
+      if (window.location.hash.includes("product") || window.location.hash.match(/#\d+/)) {
+        window.history.pushState({}, "", window.location.pathname + window.location.search);
+      }
+      // Also clear query param if any to clean the URL completely
       if (productIdParam) {
         params.delete("product");
         const searchStr = params.toString();
@@ -541,6 +598,24 @@ export default function App() {
     }
   };
 
+  const handleUpdateGoldRates = async (newRates: GoldRate) => {
+    try {
+      setGoldRates(newRates);
+      await saveGoldRatesToDB(newRates);
+    } catch (err) {
+      console.error("Failed to save gold rates to database:", err);
+    }
+  };
+
+  const handleUpdateStoreSettings = async (newSettings: StoreSettings) => {
+    try {
+      setStoreSettings(newSettings);
+      await saveStoreSettingsToDB(newSettings);
+    } catch (err) {
+      console.error("Failed to save store settings to database:", err);
+    }
+  };
+
   const categories = Array.from(new Set(productsState.map(p => p.category as string)));
   const materials = Array.from(new Set(productsState.map(p => p.material as string)));
 
@@ -550,9 +625,9 @@ export default function App() {
         products={productsState}
         orders={orders}
         goldRates={goldRates}
-        onUpdateGoldRates={setGoldRates}
+        onUpdateGoldRates={handleUpdateGoldRates}
         storeSettings={storeSettings}
-        onUpdateStoreSettings={setStoreSettings}
+        onUpdateStoreSettings={handleUpdateStoreSettings}
         onAddProduct={handleAddProduct}
         onDeleteProduct={handleDeleteProduct}
         onUpdateProduct={handleUpdateProduct}
@@ -1018,13 +1093,13 @@ export default function App() {
               <div className="space-y-2 md:space-y-3 max-w-lg relative z-10 text-center md:text-left">
                 <div className="inline-flex items-center gap-1 px-2.5 py-0.5 md:px-3 md:py-1 bg-amber-500/15 border border-amber-500/30 text-gold rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest animate-pulse">
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
-                  <span>Limited Midnight Flash Valuation</span>
+                  <span>Midnight Special Discount</span>
                 </div>
                 <h2 className="font-serif font-black text-sm sm:text-xl md:text-2xl text-white leading-tight">
                   {storeSettings.announcementText}
                 </h2>
                 <p className="text-[10px] sm:text-[11px] text-neutral-400 leading-tight">
-                  Certified BIS Hallmarked gold and brilliant cut diamond lines. Promo discount applied dynamically in your shopping bag.
+                  BIS Hallmarked pure gold and certified diamonds. Discount is applied automatically when you add items to your cart.
                 </p>
                 <div className="flex flex-wrap gap-2 pt-1 justify-center md:justify-start items-center">
                   <span className="text-[9px] sm:text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Use Voucher Code:</span>
@@ -1072,8 +1147,8 @@ export default function App() {
             <div className="space-y-4">
               <div className="flex justify-between items-center px-1">
                 <div>
-                  <h3 className="font-serif font-black text-lg text-neutral-900">✨ Contemporary Additions</h3>
-                  <p className="text-[10px] text-neutral-400">The newest certified creations from our Delhi artisans</p>
+                  <h3 className="font-serif font-black text-lg text-neutral-900">✨ Latest Designs</h3>
+                  <p className="text-[10px] text-neutral-400">Brand new jewelry handmade by our Delhi karigars</p>
                 </div>
                 <button
                   id="view-all-new"
@@ -1087,7 +1162,7 @@ export default function App() {
 
               {/* Horizontal Scroll Containers with lovely styling */}
               <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent">
-                {products.filter(p => p.badge === 'new' || p.badge === 'exclusive').map(product => (
+                {productsState.filter(p => p.section === 'latest' || p.badge === 'new' || p.badge === 'exclusive').map(product => (
                   <div key={product.id} className="w-56 flex-shrink-0">
                     <ProductCard
                       product={product}
@@ -1294,8 +1369,8 @@ export default function App() {
             <div className="space-y-4">
               <div className="flex justify-between items-center px-1">
                 <div>
-                  <h3 className="font-serif font-black text-lg text-neutral-900">🔥 Royal Masterpieces</h3>
-                  <p className="text-[10px] text-neutral-400 font-medium">The most admired and celebrated heirloom jewelry lines</p>
+                  <h3 className="font-serif font-black text-lg text-neutral-900">🔥 Popular Jewelry</h3>
+                  <p className="text-[10px] text-neutral-400 font-medium">Our best selling and most loved gold & diamond designs</p>
                 </div>
                 <button
                   id="view-all-trending"
@@ -1312,7 +1387,7 @@ export default function App() {
               </div>
 
               <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent">
-                {products.filter(p => p.badge === 'trending' || p.badge === 'bestseller').map(product => (
+                {productsState.filter(p => p.section === 'popular' || p.badge === 'trending' || p.badge === 'bestseller').map(product => (
                   <div key={product.id} className="w-56 flex-shrink-0">
                     <ProductCard
                       product={product}
@@ -1410,8 +1485,8 @@ export default function App() {
             <div className="space-y-4">
               <div className="flex justify-between items-center px-1">
                 <div>
-                  <h3 className="font-serif font-black text-lg text-neutral-900">💎 Exclusive Special Valuation</h3>
-                  <p className="text-[10px] text-neutral-400">Time-limited event pricing on heirloom investment jewelry</p>
+                  <h3 className="font-serif font-black text-lg text-neutral-900">💎 Special Offers & Discounts</h3>
+                  <p className="text-[10px] text-neutral-400">Limited time discounts on beautiful heirloom jewelry</p>
                 </div>
                 <button
                   id="view-all-sale"
@@ -1428,7 +1503,7 @@ export default function App() {
               </div>
 
               <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent">
-                {products.filter(p => p.badge === 'sale' || p.badge === 'limited').map(product => (
+                {productsState.filter(p => p.section === 'special' || p.badge === 'sale' || p.badge === 'limited').map(product => (
                   <div key={product.id} className="w-56 flex-shrink-0">
                     <ProductCard
                       product={product}
@@ -1444,10 +1519,10 @@ export default function App() {
             {/* Interactive Trust Strip Banner */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
-                { title: "BIS 916 Hallmarked", desc: "100% Pure Certified", icon: "✓", bg: "bg-amber-500/10 text-amber-800 border-amber-200" },
-                { title: "Insured Free Delivery", desc: "Secure Doorstep Transit", icon: "📦", bg: "bg-emerald-500/10 text-emerald-800 border-emerald-200" },
+                { title: "BIS 916 Hallmarked", desc: "100% Certified Pure Gold", icon: "✓", bg: "bg-amber-500/10 text-amber-800 border-amber-200" },
+                { title: "Free Insured Delivery", desc: "Safe & Secure Home Delivery", icon: "📦", bg: "bg-emerald-500/10 text-emerald-800 border-emerald-200" },
                 { title: "7-Days Safe Refund", desc: "No Questions Asked", icon: "🛡️", bg: "bg-rose-500/10 text-rose-800 border-rose-200" },
-                { title: "Lifetime Buyback", desc: "Guaranteed Metal Valuation", icon: "💎", bg: "bg-blue-500/10 text-blue-800 border-blue-200" }
+                { title: "Lifetime Buyback", desc: "Easy Exchange & Sell Value", icon: "💎", bg: "bg-blue-500/10 text-blue-800 border-blue-200" }
               ].map((badge, index) => (
                 <div key={index} className={`p-3 rounded-2xl border ${badge.bg} flex items-center gap-3 shadow-xs hover:scale-[1.02] transition-transform`}>
                   <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-sm shadow-xs flex-shrink-0">
@@ -1465,8 +1540,8 @@ export default function App() {
             <div className="bg-white/80 backdrop-blur-xs rounded-3xl p-5 border border-amber-100/60 shadow-xs space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
-                  <span className="text-[9px] font-black tracking-widest text-gold-dark uppercase">MASTER SELECTION</span>
-                  <h3 className="font-serif font-extrabold text-lg text-neutral-900">Bespoke Jewelry Collection</h3>
+                  <span className="text-[9px] font-black tracking-widest text-gold-dark uppercase">OUR COLLECTION</span>
+                  <h3 className="font-serif font-extrabold text-lg text-neutral-900">Beautiful Jewelry Designs</h3>
                 </div>
                 
                 {/* Search & View Switcher */}
@@ -1475,7 +1550,7 @@ export default function App() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
                     <input
                       type="text"
-                      placeholder="Search active catalog..."
+                      placeholder="Search jewelry, gold, diamonds..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-neutral-200 focus:border-gold focus:outline-none text-xs bg-[#FAF8F5]/50 placeholder-neutral-400 font-sans"
@@ -1722,6 +1797,8 @@ export default function App() {
             onLoginSuccess={(user) => {
               setCurrentUser(user);
               setProfileDropdownOpen(false);
+              setLoginOpen(false);
+              setActiveTab('profile');
             }}
           />
         )}

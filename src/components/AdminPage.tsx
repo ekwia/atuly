@@ -6,7 +6,7 @@ import {
   Edit3, Sliders, Search, Award, CheckSquare, LayoutDashboard,
   Percent, Settings, AlertCircle, Printer, TrendingUp, Coins, Eye,
   RefreshCw, ChevronRight, Filter, Info, ArrowUpRight, Crown, Laptop,
-  Users, X
+  Users, X, Sparkles
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Product, Order, OrderItem, ProductAttribute, GoldRate } from "../types";
@@ -137,6 +137,14 @@ export default function AdminPage({
   const [badge, setBadge] = useState<any>("");
   const [description, setDescription] = useState("");
   const [image, setImage] = useState("");
+  const [section, setSection] = useState<"latest" | "popular" | "special" | "">("");
+  const [customOptionLabel, setCustomOptionLabel] = useState("");
+  const [customOptionValues, setCustomOptionValues] = useState("");
+  const [customOptionLabel2, setCustomOptionLabel2] = useState("");
+  const [customOptionValues2, setCustomOptionValues2] = useState("");
+  const [customOptionLabel3, setCustomOptionLabel3] = useState("");
+  const [customOptionValues3, setCustomOptionValues3] = useState("");
+  const [additionalImages, setAdditionalImages] = useState<string[]>([]);
   const [attributes, setAttributes] = useState<ProductAttribute[]>([
     { label: "Material", value: "22K Gold" },
     { label: "Weight", value: "8 grams" },
@@ -382,6 +390,14 @@ export default function AdminPage({
     setBadge("");
     setDescription("");
     setImage("");
+    setSection("");
+    setCustomOptionLabel("");
+    setCustomOptionValues("");
+    setCustomOptionLabel2("");
+    setCustomOptionValues2("");
+    setCustomOptionLabel3("");
+    setCustomOptionValues3("");
+    setAdditionalImages([]);
     setAttributes([
       { label: "Material", value: "22K Gold" },
       { label: "Weight", value: "8.5 grams" },
@@ -402,6 +418,14 @@ export default function AdminPage({
     setBadge(product.badge || "");
     setDescription(product.description || "");
     setImage(product.image || "");
+    setSection(product.section || "");
+    setCustomOptionLabel(product.customOptionLabel || "");
+    setCustomOptionValues(product.customOptionValues || "");
+    setCustomOptionLabel2(product.customOptionLabel2 || "");
+    setCustomOptionValues2(product.customOptionValues2 || "");
+    setCustomOptionLabel3(product.customOptionLabel3 || "");
+    setCustomOptionValues3(product.customOptionValues3 || "");
+    setAdditionalImages(product.images || []);
     setAttributes(product.attributes && product.attributes.length > 0 ? product.attributes : [
       { label: "Material", value: "22K Gold" },
       { label: "Weight", value: "8 grams" },
@@ -420,6 +444,7 @@ export default function AdminPage({
     }
 
     const filteredAttrs = attributes.filter(a => a.label.trim() && a.value.trim());
+    const validImages = additionalImages.map(img => img.trim()).filter(img => img !== "");
 
     if (editingProduct) {
       const updatedProduct: Product = {
@@ -432,7 +457,15 @@ export default function AdminPage({
         image,
         badge: badge || undefined,
         description,
-        attributes: filteredAttrs
+        attributes: filteredAttrs,
+        section: section || undefined,
+        customOptionLabel: customOptionLabel || undefined,
+        customOptionValues: customOptionValues || undefined,
+        customOptionLabel2: customOptionLabel2 || undefined,
+        customOptionValues2: customOptionValues2 || undefined,
+        customOptionLabel3: customOptionLabel3 || undefined,
+        customOptionValues3: customOptionValues3 || undefined,
+        images: validImages.length > 0 ? validImages : undefined,
       };
 
       if (onUpdateProduct) {
@@ -456,7 +489,15 @@ export default function AdminPage({
         sold: 0,
         badge: badge || undefined,
         description,
-        attributes: filteredAttrs
+        attributes: filteredAttrs,
+        section: section || undefined,
+        customOptionLabel: customOptionLabel || undefined,
+        customOptionValues: customOptionValues || undefined,
+        customOptionLabel2: customOptionLabel2 || undefined,
+        customOptionValues2: customOptionValues2 || undefined,
+        customOptionLabel3: customOptionLabel3 || undefined,
+        customOptionValues3: customOptionValues3 || undefined,
+        images: validImages.length > 0 ? validImages : undefined,
       };
 
       onAddProduct(newProduct);
@@ -1161,9 +1202,60 @@ export default function AdminPage({
                         />
                         {image && (
                           <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex-shrink-0">
-                            <img src={image} alt="Preview" className="w-full h-full object-cover" />
+                            <img src={image} alt="Preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           </div>
                         )}
+                      </div>
+                    </div>
+
+                    {/* Gallery Images (अतिरिक्त चित्र) */}
+                    <div className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                      <h4 className="text-[11px] font-black uppercase text-slate-700 tracking-widest flex items-center gap-1.5">
+                        <Award className="w-4 h-4 text-slate-500" />
+                        Gallery Images / Multiple Images (अतिरिक्त चित्र)
+                      </h4>
+                      <p className="text-[10px] text-slate-500">Add up to 5 additional high-resolution images for the product detail slide gallery.</p>
+                      
+                      <div className="space-y-2">
+                        {additionalImages.map((imgUrl, idx) => (
+                          <div key={idx} className="flex gap-2 items-center">
+                            <span className="text-[10px] font-mono text-slate-400 w-4">#{idx + 1}</span>
+                            <input
+                              type="text"
+                              value={imgUrl}
+                              onChange={(e) => {
+                                const newImgs = [...additionalImages];
+                                newImgs[idx] = e.target.value;
+                                setAdditionalImages(newImgs);
+                              }}
+                              placeholder="https://images.unsplash.com/..."
+                              className="flex-grow bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-medium focus:outline-none focus:border-amber-500 text-slate-800 transition-all shadow-xs"
+                            />
+                            {imgUrl && (
+                              <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex-shrink-0">
+                                <img src={imgUrl} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newImgs = additionalImages.filter((_, i) => i !== idx);
+                                setAdditionalImages(newImgs);
+                              }}
+                              className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl border border-rose-200 transition-all cursor-pointer"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+
+                        <button
+                          type="button"
+                          onClick={() => setAdditionalImages([...additionalImages, ""])}
+                          className="w-full py-2.5 border-2 border-dashed border-slate-200 hover:border-amber-500 hover:text-amber-600 rounded-xl text-xs font-bold text-slate-500 flex items-center justify-center gap-2 transition-all cursor-pointer bg-white"
+                        >
+                          <span>➕ Add Gallery Image URL</span>
+                        </button>
                       </div>
                     </div>
 
@@ -1176,6 +1268,209 @@ export default function AdminPage({
                         placeholder="Describe heritage details, BIS hallmark details, gemstone clarity, cut..."
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-amber-500 focus:bg-white text-slate-800 transition-all"
                       />
+                    </div>
+
+                    {/* Homepage Placement section */}
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                      <h4 className="text-[11px] font-black uppercase text-slate-700 tracking-widest block flex items-center gap-1.5">
+                        <Award className="w-4 h-4 text-slate-500" />
+                        Homepage Section Placement
+                      </h4>
+                      <div className="space-y-1">
+                        <select
+                          value={section}
+                          onChange={(e) => setSection(e.target.value as any)}
+                          className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs font-bold focus:outline-none focus:border-amber-500 text-slate-800 transition-all shadow-xs"
+                        >
+                          <option value="">No Special Homepage Section</option>
+                          <option value="latest">✨ Latest Designs</option>
+                          <option value="popular">🔥 Popular Jewelry</option>
+                          <option value="special">💎 Special Offers & Discounts</option>
+                        </select>
+                        <p className="text-[9px] text-slate-400">Choose which curated category on the homepage this masterpiece will show up under.</p>
+                      </div>
+                    </div>
+
+                    {/* Product Variables Section */}
+                    <div className="bg-amber-500/5 p-5 rounded-2xl border border-amber-500/20 space-y-5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-500/10 pb-3">
+                        <div>
+                          <h4 className="text-[11.5px] font-black uppercase text-amber-950 tracking-widest flex items-center gap-1.5">
+                            <Sparkles className="w-4.5 h-4.5 text-amber-600 animate-pulse" />
+                            Product Options & Selection Variables (उत्पाद के विकल्प / Variables)
+                          </h4>
+                          <p className="text-[10px] text-amber-900/80 mt-0.5 font-bold">
+                            Add custom options (like Size, Color, Gold Purity, Polish) that customers can choose from.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Quick Presets for Admin */}
+                      <div className="space-y-1.5">
+                        <span className="text-[9.5px] font-black text-amber-900 uppercase tracking-wider block">
+                          ⚡ Quick Variant Blueprints (त्वरित विकल्प टेम्पलेट):
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!customOptionLabel) {
+                                setCustomOptionLabel("Ring Size");
+                                setCustomOptionValues("Size 10, Size 12, Size 14, Size 16, Size 18, Size 20");
+                              } else if (!customOptionLabel2) {
+                                setCustomOptionLabel2("Ring Size");
+                                setCustomOptionValues2("Size 10, Size 12, Size 14, Size 16, Size 18, Size 20");
+                              } else {
+                                setCustomOptionLabel3("Ring Size");
+                                setCustomOptionValues3("Size 10, Size 12, Size 14, Size 16, Size 18, Size 20");
+                              }
+                            }}
+                            className="px-2.5 py-1.5 bg-white hover:bg-amber-100 text-amber-955 border border-amber-200 rounded-xl text-[10px] font-bold transition-all cursor-pointer shadow-xs flex items-center gap-1"
+                          >
+                            <span>💍 Ring Size</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!customOptionLabel) {
+                                setCustomOptionLabel("Gold Polish");
+                                setCustomOptionValues("Yellow Gold, Rose Gold, White Gold");
+                              } else if (!customOptionLabel2) {
+                                setCustomOptionLabel2("Gold Polish");
+                                setCustomOptionValues2("Yellow Gold, Rose Gold, White Gold");
+                              } else {
+                                setCustomOptionLabel3("Gold Polish");
+                                setCustomOptionValues3("Yellow Gold, Rose Gold, White Gold");
+                              }
+                            }}
+                            className="px-2.5 py-1.5 bg-white hover:bg-amber-100 text-amber-955 border border-amber-200 rounded-xl text-[10px] font-bold transition-all cursor-pointer shadow-xs flex items-center gap-1"
+                          >
+                            <span>✨ Gold Polish</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!customOptionLabel) {
+                                setCustomOptionLabel("Gold Purity");
+                                setCustomOptionValues("18 Karat Gold, 22 Karat Gold");
+                              } else if (!customOptionLabel2) {
+                                setCustomOptionLabel2("Gold Purity");
+                                setCustomOptionValues2("18 Karat Gold, 22 Karat Gold");
+                              } else {
+                                setCustomOptionLabel3("Gold Purity");
+                                setCustomOptionValues3("18 Karat Gold, 22 Karat Gold");
+                              }
+                            }}
+                            className="px-2.5 py-1.5 bg-white hover:bg-amber-100 text-amber-955 border border-amber-200 rounded-xl text-[10px] font-bold transition-all cursor-pointer shadow-xs flex items-center gap-1"
+                          >
+                            <span>🏆 Gold Purity</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCustomOptionLabel("");
+                              setCustomOptionValues("");
+                              setCustomOptionLabel2("");
+                              setCustomOptionValues2("");
+                              setCustomOptionLabel3("");
+                              setCustomOptionValues3("");
+                            }}
+                            className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-[10px] font-bold transition-all cursor-pointer shadow-xs"
+                          >
+                            <span>❌ Clear All Slots</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Dynamic Option Slots */}
+                      <div className="space-y-4">
+                        {/* Slot 1 */}
+                        <div className="bg-white/60 p-3 rounded-xl border border-amber-200/50 space-y-3">
+                          <span className="text-[10px] font-black text-amber-950 uppercase tracking-widest block bg-amber-100/50 px-2 py-0.5 rounded w-fit">
+                            Custom Dropdown Option Slot 1 (प्रथम विकल्प)
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold text-slate-600 block">Option Label / Name</label>
+                              <input 
+                                type="text"
+                                value={customOptionLabel}
+                                onChange={(e) => setCustomOptionLabel(e.target.value)}
+                                placeholder="e.g., Select Ring Size or Polish Type"
+                                className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-bold focus:outline-none focus:border-amber-500 text-slate-800 transition-all shadow-xs"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold text-slate-600 block">Choices (Comma-separated List)</label>
+                              <input 
+                                type="text"
+                                value={customOptionValues}
+                                onChange={(e) => setCustomOptionValues(e.target.value)}
+                                placeholder="e.g., Size 10, Size 12, Size 14"
+                                className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-mono font-bold focus:outline-none focus:border-amber-500 text-slate-800 transition-all shadow-xs"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Slot 2 */}
+                        <div className="bg-white/60 p-3 rounded-xl border border-amber-200/50 space-y-3">
+                          <span className="text-[10px] font-black text-amber-950 uppercase tracking-widest block bg-amber-100/50 px-2 py-0.5 rounded w-fit">
+                            Custom Dropdown Option Slot 2 (द्वितीय विकल्प)
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold text-slate-600 block">Option Label / Name</label>
+                              <input 
+                                type="text"
+                                value={customOptionLabel2}
+                                onChange={(e) => setCustomOptionLabel2(e.target.value)}
+                                placeholder="e.g., Select Gold Polish"
+                                className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-bold focus:outline-none focus:border-amber-500 text-slate-800 transition-all shadow-xs"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold text-slate-600 block">Choices (Comma-separated List)</label>
+                              <input 
+                                type="text"
+                                value={customOptionValues2}
+                                onChange={(e) => setCustomOptionValues2(e.target.value)}
+                                placeholder="e.g., Yellow Gold, Rose Gold, White Gold"
+                                className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-mono font-bold focus:outline-none focus:border-amber-500 text-slate-800 transition-all shadow-xs"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Slot 3 */}
+                        <div className="bg-white/60 p-3 rounded-xl border border-amber-200/50 space-y-3">
+                          <span className="text-[10px] font-black text-amber-950 uppercase tracking-widest block bg-amber-100/50 px-2 py-0.5 rounded w-fit">
+                            Custom Dropdown Option Slot 3 (तृतीय विकल्प)
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold text-slate-600 block">Option Label / Name</label>
+                              <input 
+                                type="text"
+                                value={customOptionLabel3}
+                                onChange={(e) => setCustomOptionLabel3(e.target.value)}
+                                placeholder="e.g., Select Gold Purity"
+                                className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-bold focus:outline-none focus:border-amber-500 text-slate-800 transition-all shadow-xs"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold text-slate-600 block">Choices (Comma-separated List)</label>
+                              <input 
+                                type="text"
+                                value={customOptionValues3}
+                                onChange={(e) => setCustomOptionValues3(e.target.value)}
+                                placeholder="e.g., 18 Karat, 22 Karat"
+                                className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs font-mono font-bold focus:outline-none focus:border-amber-500 text-slate-800 transition-all shadow-xs"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Product Attributes list */}
