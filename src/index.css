@@ -6,9 +6,183 @@
   --font-serif: "Playfair Display", ui-serif, Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
-  /* Luxury Gold, Diamond & Silver palette */
-  --color-gold: #D4AF37;
-  --color-gold-dark: #B5942E;
-  --color-gold-light: #F3E5AB;
+  /* Modern Matte Royal Gold & Champagne palette */
+  --color-gold: #C5A059;
+  --color-gold-dark: #A47E3B;
+  --color-gold-light: #F9F6EE;
+
+  /* Overriding amber to elegant high-end champagne tones */
+  --color-amber-50: #FDFCF9;
+  --color-amber-100: #F7F4EA;
+  --color-amber-200: #EFEAD8;
+  --color-amber-300: #DFD5B9;
+  --color-amber-400: #C5A059;
+  --color-amber-500: #B58F43;
+  --color-amber-600: #9F782F;
+  --color-amber-700: #7F5D1F;
+  --color-amber-800: #5E4313;
+  --color-amber-900: #3D2909;
+  --color-amber-950: #1D1201;
+
+  /* Overriding yellow to vibrant sparkling gold */
+  --color-yellow-50: #FFFDF5;
+  --color-yellow-100: #FFF8E1;
+  --color-yellow-200: #FFEAA7;
+  --color-yellow-300: #FDCB6E;
+  --color-yellow-400: #ECCC68;
+  --color-yellow-500: #FFC048;
+  --color-yellow-600: #E58E26;
+  --color-yellow-700: #B58F43;
+  --color-yellow-800: #9F782F;
+  --color-yellow-900: #5E4313;
+  --color-yellow-950: #1D1201;
+
+  /* Standard Neutrals redefined to beautiful Royal Cream Ivory for a warm light feel */
+  --color-neutral-50: #FFFDF9;
+  --color-neutral-100: #FAF7F0;
+  --color-neutral-200: #F3ECE0;
+  --color-neutral-300: #E5DAC7;
+  --color-neutral-450: #C1B096;
+  --color-neutral-500: #9B8A72;
+  --color-neutral-600: #7D6F5A;
+  --color-neutral-700: #5F5342;
+  --color-neutral-800: #42382B;
+  --color-neutral-900: #2C241B;
+  --color-neutral-950: #1C150E;
+
+  /* Slates redefined to warm platinum beige coordinates */
+  --color-slate-50: #FCFAF7;
+  --color-slate-100: #F4EFEB;
+  --color-slate-200: #EAE0D5;
+  --color-slate-300: #D8C4B6;
+  --color-slate-400: #B59E90;
+  --color-slate-500: #967E70;
+  --color-slate-600: #7E6557;
+  --color-slate-700: #5E4B41;
+  --color-slate-800: #3E312A;
+  --color-slate-900: #211915;
+  --color-slate-950: #120D0A;
 }
 
+/* Base Body Styles */
+body {
+  background-color: #FAF7F0 !important;
+  color: #2C241B !important;
+}
+
+/* Force dark/neutral elements to beautiful high-contrast champagne ivory */
+.bg-neutral-950, .bg-slate-950 {
+  background-color: #FAF7F0 !important;
+  color: #2C241B !important;
+  border-color: #E5DAC7 !important;
+}
+
+.bg-neutral-900, .bg-slate-900 {
+  background-color: #FAF7F0 !important;
+  color: #2C241B !important;
+  border-color: #FAF5E6 !important;
+}
+
+.bg-neutral-850, .bg-slate-850 {
+  background-color: #FAF7F0 !important;
+  color: #2C241B !important;
+  border-color: #E5DAC7 !important;
+}
+
+/* Ensure child text inside these elements is dark and readable */
+.bg-neutral-950 *, .bg-neutral-900 *, .bg-neutral-850 *, .bg-neutral-800 *,
+.bg-slate-950 *, .bg-slate-900 *, .bg-slate-850 *, .bg-slate-800 * {
+  color: #2C241B !important; /* Keep text beautifully readable in dark charcoal/black */
+  border-color: #E5DAC7 !important;
+}
+
+/* Exception for buttons and badges inside overwritten regions - give them high-contrast light gold/champagne background with deep golden/black text */
+.bg-neutral-950 button, .bg-neutral-900 button, .bg-slate-950 button, .bg-slate-900 button,
+.bg-neutral-950 .btn, .bg-neutral-900 .btn {
+  background-color: #FAF5E6 !important; /* light gold/champagne */
+  color: #93761E !important; /* elegant deep gold */
+  border: 1px solid #E6D49D !important;
+}
+
+.bg-neutral-950 button:hover, .bg-neutral-900 button:hover, .bg-slate-950 button:hover, .bg-slate-900 button:hover {
+  background-color: #E6D49D !important; /* slightly darker gold on hover */
+  color: #1C1502 !important;
+}
+
+/* Special overrides for countdown timer cards */
+.bg-neutral-950 .bg-neutral-900 {
+  background-color: #FAF5E6 !important;
+  border-color: #E6D49D !important;
+  color: #93761E !important;
+}
+
+/* Icons within these regions should have the beautiful luxury gold/bronze theme */
+.bg-neutral-950 svg, .bg-neutral-900 svg, .bg-slate-950 svg, .bg-slate-900 svg {
+  color: #C5A059 !important;
+}
+
+/* Header dynamic menu overrides */
+header.bg-neutral-950 {
+  background-color: #FCFAF2 !important;
+  border-bottom: 1px solid #E6D49D !important;
+}
+
+header.bg-neutral-950 * {
+  color: #2C241B !important;
+}
+
+/* Elegant Footer light ivory/gold theme styling */
+footer {
+  background-color: #FAF5E6 !important;
+  color: #2C241B !important;
+  border-top: 1px solid #E6D49D !important;
+}
+
+footer * {
+  color: #2C241B !important;
+}
+
+footer .text-neutral-500, footer .text-neutral-600 {
+  color: #715812 !important;
+}
+
+/* Override inline background colors like bg-[#D4AF37] or bg-black to beautiful light gold/champagne or bright golden */
+.bg-\[\#D4AF37\], .bg-black {
+  background-color: var(--color-gold) !important;
+  color: #1C1502 !important; /* Perfect high contrast black text on gold */
+}
+
+.bg-\[\#D4AF37\] *, .bg-black * {
+  color: #1C1502 !important;
+}
+
+.hover\:bg-\[\#B5942E\]:hover {
+  background-color: var(--color-gold-dark) !important;
+}
+
+.text-\[\#D4AF37\] {
+  color: var(--color-gold) !important;
+}
+
+/* Fix category grids overlay opacity so they look light and elegant, not dark */
+.group.bg-neutral-900 {
+  background-color: #FCFAF2 !important;
+}
+
+.group.bg-neutral-900 img {
+  opacity: 0.22 !important; /* light visual overlay instead of 70% dark */
+}
+
+.group.bg-neutral-900 h3 {
+  color: #2C241B !important;
+}
+
+/* Active tab override in Admin */
+.bg-slate-900 {
+  background-color: #FAF5E6 !important;
+  color: #B5942E !important;
+}
+
+.bg-slate-900 * {
+  color: #B5942E !important;
+}

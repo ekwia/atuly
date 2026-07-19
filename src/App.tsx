@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { products, reviews } from "./data";
-import { Product, CartItem, GoldRate, User, Order, StoreSettings } from "./types";
+import { Product, CartItem, GoldRate, User, Order, StoreSettings, Category } from "./types";
 import { 
   getProductsFromDB, 
   getOrdersFromDB, 
@@ -40,6 +40,9 @@ import {
   saveGoldRatesToDB,
   getStoreSettingsFromDB,
   saveStoreSettingsToDB,
+  getCategoriesFromDB,
+  saveCategoryToDB,
+  deleteCategoryFromDB,
   auth
 } from "./firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -98,7 +101,7 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, fallbackValue: T
 export default function App() {
   // Navigation & Page views
   const [activeTab, setActiveTab] = useState<'home' | 'about' | 'search' | 'category' | 'cart' | 'admin' | 'calculator' | 'consultant' | 'profile'>('home');
-  const [selectedCategoryPage, setSelectedCategoryPage] = useState<string>("coins");
+  const [selectedCategoryPage, setSelectedCategoryPage] = useState<string>("directory");
   const [selectedCategoryBadge, setSelectedCategoryBadge] = useState<string>("all");
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -206,6 +209,15 @@ export default function App() {
         }
       } catch (err) {
         console.error("Failed to load products from Firestore on startup:", err);
+      }
+
+      try {
+        const dbCategories = await getCategoriesFromDB();
+        if (active && dbCategories && dbCategories.length > 0) {
+          setCategoriesState(dbCategories);
+        }
+      } catch (err) {
+        console.error("Failed to load categories from Firestore on startup:", err);
       }
 
       try {
@@ -423,6 +435,21 @@ export default function App() {
     localStorage.setItem("atulya_store_settings", JSON.stringify(storeSettings));
   }, [storeSettings]);
 
+  // Dynamic categories state with local cache fallback
+  const [categoriesState, setCategoriesState] = useState<Category[]>(() => {
+    try {
+      const stored = localStorage.getItem("atulya_categories");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Persist categories
+  useEffect(() => {
+    localStorage.setItem("atulya_categories", JSON.stringify(categoriesState));
+  }, [categoriesState]);
+
   // Persist gold rates
   useEffect(() => {
     localStorage.setItem("atulya_gold_rates", JSON.stringify(goldRates));
@@ -616,6 +643,33 @@ export default function App() {
     }
   };
 
+  const handleAddCategory = async (cat: Category) => {
+    try {
+      await saveCategoryToDB(cat);
+      setCategoriesState(prev => [...prev.filter(c => c.id !== cat.id), cat]);
+    } catch (err) {
+      console.error("Failed to save category:", err);
+    }
+  };
+
+  const handleUpdateCategory = async (cat: Category) => {
+    try {
+      await saveCategoryToDB(cat);
+      setCategoriesState(prev => prev.map(c => c.id === cat.id ? cat : c));
+    } catch (err) {
+      console.error("Failed to update category:", err);
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    try {
+      await deleteCategoryFromDB(id);
+      setCategoriesState(prev => prev.filter(c => c.id !== id));
+    } catch (err) {
+      console.error("Failed to delete category:", err);
+    }
+  };
+
   const categories = Array.from(new Set(productsState.map(p => p.category as string)));
   const materials = Array.from(new Set(productsState.map(p => p.material as string)));
 
@@ -633,6 +687,10 @@ export default function App() {
         onUpdateProduct={handleUpdateProduct}
         onUpdateOrderStatus={handleUpdateOrderStatus}
         onUpdateOrderPayment={handleUpdateOrderPayment}
+        categories={categoriesState}
+        onAddCategory={handleAddCategory}
+        onUpdateCategory={handleUpdateCategory}
+        onDeleteCategory={handleDeleteCategory}
         onBack={() => {
           setActiveTab('home');
           window.scrollTo({ top: 0 });
@@ -774,6 +832,16 @@ export default function App() {
               >
                 <span>Collections</span>
                 {activeTab === 'home' && (
+                  <motion.div layoutId="activeNav" className="absolute -bottom-1.5 w-1.5 h-1.5 rounded-full bg-gold-dark" />
+                )}
+              </button>
+              <button
+                id="nav-categories"
+                onClick={() => { setActiveTab('category'); setSelectedCategoryPage('directory'); setSelectedProduct(null); }}
+                className={`relative py-2.5 transition-all duration-300 hover:text-neutral-900 cursor-pointer flex flex-col items-center gap-1 ${activeTab === 'category' ? "text-gold-dark font-extrabold" : ""}`}
+              >
+                <span>Categories</span>
+                {activeTab === 'category' && (
                   <motion.div layoutId="activeNav" className="absolute -bottom-1.5 w-1.5 h-1.5 rounded-full bg-gold-dark" />
                 )}
               </button>
@@ -1033,6 +1101,7 @@ export default function App() {
         ) : activeTab === 'category' ? (
           <CategoryPage
             category={selectedCategoryPage}
+            categories={categoriesState}
             products={productsState}
             onBack={() => setActiveTab('home')}
             onOpenProductDetail={setSelectedProduct}
@@ -1152,7 +1221,11 @@ export default function App() {
                 </div>
                 <button
                   id="view-all-new"
-                  onClick={() => { setSelectedBadge("new"); setSelectedCategory("all"); }}
+                  onClick={() => {
+                    setSelectedCategoryPage("all");
+                    setSelectedCategoryBadge("new");
+                    setActiveTab('category');
+                  }}
                   className="text-xs font-semibold text-gold-dark flex items-center gap-0.5 hover:text-gold"
                 >
                   <span>View All New</span>
@@ -1907,7 +1980,7 @@ export default function App() {
         <div className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-neutral-150 py-1 px-1.5 flex justify-around items-center z-40 shadow-[0_-6px_20px_rgba(0,0,0,0.06)] h-[52px]">
           {[
             { tab: 'home', label: 'Home', icon: Home, action: () => { setActiveTab('home'); setSelectedProduct(null); } },
-            { tab: 'category', label: 'Category', icon: Grid, action: () => { setActiveTab('category'); setSelectedProduct(null); } },
+            { tab: 'category', label: 'Category', icon: Grid, action: () => { setActiveTab('category'); setSelectedCategoryPage('directory'); setSelectedProduct(null); } },
             { tab: 'search', label: 'Search', icon: Search, action: () => { setActiveTab('search'); setSelectedProduct(null); } },
             { tab: 'cart', label: 'Cart', icon: ShoppingBag, action: () => { setActiveTab('cart'); setSelectedProduct(null); }, badge: cartCount },
             { tab: 'profile', label: 'Profile', icon: UserIcon, action: () => {

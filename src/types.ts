@@ -101,3 +101,14 @@ export interface StoreSettings {
   aboutStory: string;
 }
 
+export interface Category {
+  id: string; // e.g. "rings"
+  name: string; // e.g. "Rings"
+  title?: string;
+  tagline?: string;
+  description?: string;
+  banner?: string;
+  purityBadge?: string;
+  trustFactor?: string;
+}
+

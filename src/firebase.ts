@@ -23,26 +23,16 @@ import {
   signInWithEmailAndPassword,
   updateProfile
 } from "firebase/auth";
-import { Product, Order, Review, User, GoldRate, StoreSettings } from "./types";
+import { Product, Order, Review, User, GoldRate, StoreSettings, Category } from "./types";
 import { products as defaultProducts, reviews as defaultReviews } from "./data";
 
-// Firebase credentials from generated configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyB9IzJQZZiUuCM-kYW-hkNBJ8wG463Lekg",
-  authDomain: "gen-lang-client-0178866138.firebaseapp.com",
-  projectId: "gen-lang-client-0178866138",
-  storageBucket: "gen-lang-client-0178866138.firebasestorage.app",
-  messagingSenderId: "107965391455",
-  appId: "1:107965391455:web:725ceaa7b7b1feaba5f1ea"
-};
+import firebaseConfig from "../firebase-applet-config.json";
 
 // Initialize Firebase App
 const app = initializeApp(firebaseConfig);
 
 // Support both the custom user project (default DB) and current studio environment DB ID
-const databaseId = firebaseConfig.projectId === "gen-lang-client-0178866138"
-  ? "(default)"
-  : "ai-studio-atulyajewelers-31611d17-3baa-4cd7-8c83-6136b61819c8";
+const databaseId = firebaseConfig.firestoreDatabaseId || "(default)";
 
 // Use the specific firestore database ID provisioned for this applet with forced long polling
 export const db = initializeFirestore(app, {
@@ -489,6 +479,137 @@ export async function saveStoreSettingsToDB(settings: StoreSettings): Promise<vo
   } catch (error) {
     console.error("Error saving store settings to Firestore:", error);
     throw error;
+  }
+}
+
+// --- CATEGORIES OPERATIONS ---
+const CATEGORIES_COLLECTION = "categories";
+
+export async function getCategoriesFromDB(): Promise<Category[]> {
+  try {
+    const categoriesRef = collection(db, CATEGORIES_COLLECTION);
+    const q = query(categoriesRef);
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      console.log("Firestore categories collection is empty. Seeding default categories...");
+      await seedDefaultCategories();
+      return getCategoriesFromDB();
+    }
+    
+    const categoriesList: Category[] = [];
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      categoriesList.push({
+        id: data.id,
+        name: data.name || "",
+        title: data.title || "",
+        tagline: data.tagline || "",
+        description: data.description || "",
+        banner: data.banner || "",
+        purityBadge: data.purityBadge || "",
+        trustFactor: data.trustFactor || ""
+      } as Category);
+    });
+    
+    return categoriesList;
+  } catch (error) {
+    console.error("Error fetching categories from Firestore:", error);
+    return [];
+  }
+}
+
+export async function saveCategoryToDB(category: Category): Promise<void> {
+  try {
+    const docRef = doc(db, CATEGORIES_COLLECTION, category.id);
+    await setDoc(docRef, category);
+  } catch (error) {
+    console.error("Error saving category to Firestore:", error);
+    throw error;
+  }
+}
+
+export async function deleteCategoryFromDB(id: string): Promise<void> {
+  try {
+    const docRef = doc(db, CATEGORIES_COLLECTION, id);
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.error("Error deleting category from Firestore:", error);
+    throw error;
+  }
+}
+
+async function seedDefaultCategories(): Promise<void> {
+  const defaultCats: Category[] = [
+    {
+      id: "coins",
+      name: "Coins",
+      title: "Pure Investment Gold Coins",
+      tagline: "99.9% 24K Certified Assay Gold",
+      description: "Safeguard your savings with our BIS certified, tamper-proof packed pure gold and silver investment coins. Individually serial numbered and ready for lifelong liquidity with 100% transparent buybacks.",
+      banner: "https://images.unsplash.com/photo-1618042164219-62c820f10723?auto=format&fit=crop&w=1200&q=80",
+      purityBadge: "999 Fine Purest Gold",
+      trustFactor: "Individually Assayed & Serialized"
+    },
+    {
+      id: "rings",
+      name: "Rings",
+      title: "Engagement & Cocktail Rings",
+      tagline: "VVS-VS Clarity Hand-Crafted Diamonds",
+      description: "Exquisite traditional and modern designer rings. Made with BIS hallmarked 22K/18K gold and set with certified brilliant-cut diamonds, rubies, and Colombian emeralds to last a lifetime.",
+      banner: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1200&q=80",
+      purityBadge: "BIS Hallmarked 18K/22K",
+      trustFactor: "Hand-set by Elite Artisans"
+    },
+    {
+      id: "pendants",
+      name: "Pendants",
+      title: "Celestial Pendants & Charms",
+      tagline: "Divine & Heritage Designs",
+      description: "Express your devotion or custom style. Fine carved religious pooja pendants, modern sleek office wear diamond bail necklaces, and traditional heavy gold temple lockets.",
+      banner: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1200&q=80",
+      purityBadge: "BIS Certified 22 Karat",
+      trustFactor: "Includes Complimentary Chain Bail"
+    },
+    {
+      id: "earrings",
+      name: "Earrings",
+      title: "Chandbalis, Jhumkas & Studs",
+      tagline: "The Crown Jewels of Fine Accent",
+      description: "Enhance your face with brilliant luxury. From lightweight modern studs to intricate traditional royal bridal jhumkas and majestic chandbalis finished in hand-placed pearls.",
+      banner: "https://images.unsplash.com/photo-1635767798638-3e25273a8236?auto=format&fit=crop&w=1200&q=80",
+      purityBadge: "100% Certified Hallmark",
+      trustFactor: "Secure Luxury Back-screws"
+    },
+    {
+      id: "bracelets",
+      name: "Bracelets",
+      title: "Luxury Bracelets & Kadas",
+      tagline: "Elegant wrist statement wear",
+      description: "Draped in sheer luxury. Lightweight daily diamond tennis bracelets, chunky heavy gold traditional kadas, and flexible elegant standard line-bangles.",
+      banner: "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&w=1200&q=80",
+      purityBadge: "Certified Solid Gold & Platinum",
+      trustFactor: "Dynamic Sizing & Safety Clasps"
+    },
+    {
+      id: "necklaces",
+      name: "Necklaces",
+      title: "Bridal Chokers & Rani Haars",
+      tagline: "The Ultimate Royal Heirloom Line",
+      description: "The epitome of traditional Indian jewelry heritage. Intricate polki, majestic kundan, and brilliant-cut diamond bridal collar necklaces that define high society luxury.",
+      banner: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=1200&q=80",
+      purityBadge: "Certified Heritage Kundan & Polki",
+      trustFactor: "GIA/IGI Gem Authenticated"
+    }
+  ];
+
+  for (const cat of defaultCats) {
+    try {
+      const docRef = doc(db, CATEGORIES_COLLECTION, cat.id);
+      await setDoc(docRef, cat);
+    } catch (err) {
+      console.error(`Failed to seed category ${cat.id}:`, err);
+    }
   }
 }
 

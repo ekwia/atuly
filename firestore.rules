@@ -135,5 +135,11 @@ service cloud.firestore {
       allow write: if isBoutiqueAdmin();
     }
 
+    // Categories collection (Read: Everyone; Write: Admin only)
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isBoutiqueAdmin();
+    }
+
   }
 }

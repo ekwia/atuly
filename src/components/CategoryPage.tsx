@@ -15,11 +15,12 @@ import {
   X
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { Product } from "../types";
+import { Product, Category } from "../types";
 import ProductCard from "./ProductCard";
 
 interface CategoryPageProps {
   category: string;
+  categories: Category[];
   products: Product[];
   onBack: () => void;
   onOpenProductDetail: (product: Product) => void;
@@ -99,6 +100,7 @@ const ALL_CATEGORIES = ["all", "coins", "rings", "pendants", "earrings", "bracel
 
 export default function CategoryPage({
   category,
+  categories,
   products,
   onBack,
   onOpenProductDetail,
@@ -129,15 +131,144 @@ export default function CategoryPage({
     }
   }, [initialBadge]);
 
+  // ==================== EXPLICIT CATEGORY DIRECTORY VIEW (ONLY CATEGORIES, NO PRODUCTS) ====================
+  if (category === "directory") {
+    return (
+      <div className="bg-neutral-50/50 min-h-screen font-sans pb-16">
+        {/* Directory Header Bar */}
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between border-b border-neutral-100 bg-white shadow-xs">
+          <button
+            onClick={onBack}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-neutral-600 hover:text-neutral-950 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 text-gold-dark" /> Back to Main
+          </button>
+          <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest font-mono">
+            Atulya Department Directory
+          </span>
+        </div>
+
+        {/* Categories Directory Grid */}
+        <div className="max-w-7xl mx-auto px-4 mt-8 md:mt-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {categories.map((cat) => {
+              const count = products.filter(p => p.category === cat.id).length;
+              return (
+                <motion.div
+                  key={cat.id}
+                  whileHover={{ y: -6 }}
+                  className="bg-white rounded-[24px] border border-neutral-150 overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col h-[380px] text-left group cursor-pointer"
+                  onClick={() => onSelectCategory(cat.id)}
+                >
+                  {/* Category Image */}
+                  <div className="h-44 bg-neutral-100 relative overflow-hidden">
+                    {cat.banner ? (
+                      <img
+                        src={cat.banner}
+                        alt={cat.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-neutral-50 to-neutral-100 text-neutral-400">
+                        <Gem className="w-8 h-8" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/80 via-neutral-950/20 to-transparent" />
+                    
+                    {/* Badge and Title */}
+                    <div className="absolute bottom-4 left-5 right-5 text-white">
+                      {cat.purityBadge && (
+                        <span className="text-[8px] bg-amber-500/90 text-white px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider inline-block mb-1">
+                          {cat.purityBadge}
+                        </span>
+                      )}
+                      <h3 className="font-serif font-black text-lg md:text-xl leading-tight group-hover:text-gold transition-colors">
+                        {cat.name}
+                      </h3>
+                    </div>
+
+                    <div className="absolute top-4 right-5 bg-neutral-900/80 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-bold text-white uppercase tracking-wider border border-white/15 shadow-xs">
+                      {count} {count === 1 ? 'Design' : 'Designs'}
+                    </div>
+                  </div>
+
+                  {/* Category description & marketing */}
+                  <div className="p-5 flex-grow flex flex-col justify-between space-y-4">
+                    <div className="space-y-1.5">
+                      {cat.tagline && (
+                        <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">
+                          {cat.tagline}
+                        </p>
+                      )}
+                      {cat.description && (
+                        <p className="text-xs text-neutral-500 font-medium leading-normal line-clamp-3">
+                          {cat.description}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="border-t border-neutral-100 pt-3 flex items-center justify-between text-neutral-400">
+                      {cat.trustFactor ? (
+                        <span className="text-[9.5px] font-bold text-neutral-500 flex items-center gap-1.5 uppercase tracking-wide">
+                          <ShieldCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                          <span className="line-clamp-1">{cat.trustFactor}</span>
+                        </span>
+                      ) : (
+                        <span className="text-[9.5px] font-bold text-neutral-500 flex items-center gap-1.5 uppercase tracking-wide">
+                          <Award className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                          <span>BIS Hallmarked & Certified</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Safety trust banner */}
+        <div className="max-w-7xl mx-auto px-4 mt-12">
+          <div className="bg-neutral-950 text-white p-6 sm:p-8 rounded-3xl border border-neutral-800 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden text-center md:text-left">
+            <div className="absolute top-0 right-0 w-44 h-44 bg-gold/15 rounded-full filter blur-2xl pointer-events-none" />
+            <div className="space-y-1.5 max-w-xl">
+              <h3 className="font-serif font-black text-lg sm:text-xl flex items-center justify-center md:justify-start gap-1.5">
+                <Award className="w-5 h-5 text-gold" /> Guaranteed Pure Wealth Assets
+              </h3>
+              <p className="text-xs sm:text-sm text-neutral-400 font-medium leading-relaxed">
+                Atulya Gold stands by absolute purity under legal guidelines. Every precious coin, luxury kada, or bridal haar is tested, certified, and fully hallmarked.
+              </p>
+            </div>
+            <button
+              onClick={onBack}
+              className="px-6 py-3 bg-white hover:bg-neutral-100 text-neutral-950 font-bold text-xs uppercase tracking-widest rounded-xl transition-all cursor-pointer whitespace-nowrap"
+            >
+              Back to Collections
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Retrieve current category details
-  const details = CATEGORY_DETAILS[category] || {
+  const dbCat = categories.find(c => c.id === category);
+  const details = dbCat ? {
+    title: dbCat.title || dbCat.name,
+    tagline: dbCat.tagline || "Fine Certified Luxury Designs",
+    description: dbCat.description || "Explore our collection of hand-picked jewelry. BIS Hallmarked, verified premium gold and certified brilliant-cut gemstones.",
+    banner: dbCat.banner || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1200&q=80",
+    purityBadge: dbCat.purityBadge || "BIS Certified",
+    trustFactor: dbCat.trustFactor || "Secure Shipped Transit"
+  } : (CATEGORY_DETAILS[category] || {
     title: `${category.charAt(0).toUpperCase() + category.slice(1)} Collections`,
     tagline: "Fine Certified Luxury Designs",
     description: "Explore our collection of hand-picked jewelry. BIS Hallmarked, verified premium gold and certified brilliant-cut gemstones.",
     banner: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1200&q=80",
     purityBadge: "BIS Certified",
     trustFactor: "Secure Shipped Transit"
-  };
+  });
 
   // Extract available metals inside this specific category
   const categoryProducts = category === "all" ? products : products.filter(p => p.category === category);
@@ -418,17 +549,35 @@ export default function CategoryPage({
         {/* Quick horizontal categories switcher */}
         <div className="hidden md:flex items-center gap-2 overflow-x-auto whitespace-nowrap py-1">
           <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mr-2">Collections:</span>
-          {ALL_CATEGORIES.map(cat => (
+          <button
+            onClick={() => {
+              onSelectCategory("directory");
+            }}
+            className={`px-3 py-1 text-[11px] font-bold rounded-lg capitalize transition-all border ${category === "directory" ? "bg-slate-900 text-white border-slate-950 shadow-xs animate-fadeIn" : "bg-white text-neutral-600 border-neutral-150 hover:bg-neutral-50"}`}
+          >
+            All Categories
+          </button>
+          <button
+            onClick={() => {
+              onSelectCategory("all");
+              setSelectedMetal("all");
+              setSelectedBadge("all");
+            }}
+            className={`px-3 py-1 text-[11px] font-bold rounded-lg capitalize transition-all border ${category === "all" ? "bg-gold text-white border-gold-dark shadow-xs" : "bg-white text-neutral-600 border-neutral-150 hover:bg-neutral-50"}`}
+          >
+            All Designs
+          </button>
+          {categories.map(cat => (
             <button
-              key={cat}
+              key={cat.id}
               onClick={() => {
-                onSelectCategory(cat);
+                onSelectCategory(cat.id);
                 setSelectedMetal("all");
                 setSelectedBadge("all");
               }}
-              className={`px-3 py-1 text-[11px] font-bold rounded-lg capitalize transition-all border ${category === cat ? "bg-gold text-white border-gold-dark shadow-xs" : "bg-white text-neutral-600 border-neutral-150 hover:bg-neutral-50"}`}
+              className={`px-3 py-1 text-[11px] font-bold rounded-lg capitalize transition-all border ${category === cat.id ? "bg-gold text-white border-gold-dark shadow-xs" : "bg-white text-neutral-600 border-neutral-150 hover:bg-neutral-50"}`}
             >
-              {cat === "all" ? "All Designs" : cat}
+              {cat.name}
             </button>
           ))}
         </div>

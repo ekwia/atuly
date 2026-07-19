@@ -9,7 +9,7 @@ import {
   Users, X, Sparkles
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { Product, Order, OrderItem, ProductAttribute, GoldRate } from "../types";
+import { Product, Order, OrderItem, ProductAttribute, GoldRate, Category } from "../types";
 
 interface AdminPageProps {
   products: Product[];
@@ -33,6 +33,10 @@ interface AdminPageProps {
   onUpdateProduct?: (product: Product) => void;
   onUpdateOrderStatus: (orderId: string, status: Order['status']) => void;
   onUpdateOrderPayment: (orderId: string, paymentStatus: Order['paymentStatus']) => void;
+  categories?: Category[];
+  onAddCategory?: (category: Category) => void;
+  onUpdateCategory?: (category: Category) => void;
+  onDeleteCategory?: (id: string) => void;
   onBack: () => void;
 }
 
@@ -119,10 +123,26 @@ export default function AdminPage({
   onUpdateProduct,
   onUpdateOrderStatus,
   onUpdateOrderPayment,
+  categories = [],
+  onAddCategory,
+  onUpdateCategory,
+  onDeleteCategory,
   onBack
 }: AdminPageProps) {
   // Navigation tabs
-  const [activeTab, setActiveTab] = useState<'stats' | 'products' | 'orders' | 'coupons' | 'rates' | 'settings' | 'users'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'products' | 'orders' | 'coupons' | 'rates' | 'settings' | 'users' | 'categories'>('stats');
+
+  // Category management states
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [catId, setCatId] = useState("");
+  const [catName, setCatName] = useState("");
+  const [catTitle, setCatTitle] = useState("");
+  const [catTagline, setCatTagline] = useState("");
+  const [catDescription, setCatDescription] = useState("");
+  const [catBanner, setCatBanner] = useState("");
+  const [catPurityBadge, setCatPurityBadge] = useState("");
+  const [catTrustFactor, setCatTrustFactor] = useState("");
 
   // Product CRUD states
   const [showProductForm, setShowProductForm] = useState(false);
@@ -681,6 +701,21 @@ export default function AdminPage({
           </button>
 
           <button
+            onClick={() => setActiveTab('categories')}
+            className={`w-full flex items-center gap-3 px-4.5 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'categories' 
+                ? "bg-slate-900 text-white shadow-md shadow-slate-900/15" 
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+            }`}
+          >
+            <Layers className="w-4 h-4" />
+            <span>Category Desk</span>
+            <span className="ml-auto bg-slate-100 text-slate-600 text-[9px] px-1.5 py-0.5 rounded-full font-bold">
+              {categories.length}
+            </span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('settings')}
             className={`w-full flex items-center gap-3 px-4.5 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'settings' 
@@ -719,6 +754,7 @@ export default function AdminPage({
               {activeTab === 'coupons' && "Promo Coupons & Vouchers"}
               {activeTab === 'rates' && "Metal Valuation Board"}
               {activeTab === 'settings' && "Boutique Story Settings"}
+              {activeTab === 'categories' && "Category Structuring desk"}
             </h1>
             <span className="hidden sm:inline bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-100 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -1121,12 +1157,9 @@ export default function AdminPage({
                             onChange={(e) => setCategory(e.target.value)}
                             className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold focus:outline-none focus:bg-white text-slate-800 transition-all"
                           >
-                            <option value="coins">Coins</option>
-                            <option value="rings">Rings</option>
-                            <option value="pendants">Pendants</option>
-                            <option value="earrings">Earrings</option>
-                            <option value="bracelets">Bracelets</option>
-                            <option value="necklaces">Necklaces</option>
+                            {categories.map(cat => (
+                              <option key={cat.id} value={cat.id}>{cat.name}</option>
+                            ))}
                           </select>
                         </div>
 
@@ -1562,12 +1595,9 @@ export default function AdminPage({
                         className="p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none text-slate-700"
                       >
                         <option value="all">All Categories</option>
-                        <option value="coins">Coins</option>
-                        <option value="rings">Rings</option>
-                        <option value="pendants">Pendants</option>
-                        <option value="earrings">Earrings</option>
-                        <option value="bracelets">Bracelets</option>
-                        <option value="necklaces">Necklaces</option>
+                        {categories.map(cat => (
+                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
                       </select>
 
                       {/* Material Filter */}
@@ -2910,6 +2940,299 @@ export default function AdminPage({
                 </form>
               </div>
 
+            </div>
+          )}
+
+          {/* ==================== TAB 7: CATEGORY MANAGEMENT ==================== */}
+          {activeTab === 'categories' && (
+            <div className="space-y-6 md:space-y-8 animate-fadeIn text-left">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">CATALOG STRUCTURING DESK</span>
+                  <h3 className="font-serif font-black text-base text-slate-900 mt-1">Boutique Category Collections</h3>
+                  <p className="text-[10px] text-slate-400">Add, edit, or remove catalog categories, update banners and marketing promises dynamically</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setEditingCategory(null);
+                    setCatId("");
+                    setCatName("");
+                    setCatTitle("");
+                    setCatTagline("");
+                    setCatDescription("");
+                    setCatBanner("");
+                    setCatPurityBadge("");
+                    setCatTrustFactor("");
+                    setShowCategoryForm(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4.5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs rounded-xl shadow-lg shadow-amber-500/15 cursor-pointer self-start sm:self-center"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Create Category</span>
+                </button>
+              </div>
+
+              {/* Form Modal/Section */}
+              <AnimatePresence>
+                {showCategoryForm && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 space-y-4 max-w-3xl"
+                  >
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                      <h4 className="font-serif font-black text-sm text-slate-900">
+                        {editingCategory ? `Modify Category: ${editingCategory.name}` : "Establish New Category"}
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => setShowCategoryForm(false)}
+                        className="p-1.5 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-700 cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!catId.trim() || !catName.trim()) {
+                          setErrorMsg("Category ID and Category Name are required.");
+                          return;
+                        }
+                        const finalId = catId.trim().toLowerCase().replace(/\s+/g, "-");
+                        const newCat: Category = {
+                          id: finalId,
+                          name: catName.trim(),
+                          title: catTitle.trim() || undefined,
+                          tagline: catTagline.trim() || undefined,
+                          description: catDescription.trim() || undefined,
+                          banner: catBanner.trim() || undefined,
+                          purityBadge: catPurityBadge.trim() || undefined,
+                          trustFactor: catTrustFactor.trim() || undefined
+                        };
+
+                        if (editingCategory) {
+                          onUpdateCategory?.(newCat);
+                          setSuccessMsg(`Category "${newCat.name}" updated successfully!`);
+                        } else {
+                          onAddCategory?.(newCat);
+                          setSuccessMsg(`Category "${newCat.name}" created successfully!`);
+                        }
+                        setShowCategoryForm(false);
+                        setTimeout(() => setSuccessMsg(""), 2500);
+                      }}
+                      className="space-y-4 text-xs font-bold text-left"
+                    >
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black uppercase text-slate-400 block text-left">Category ID (Unique Slug)</label>
+                          <input
+                            type="text"
+                            disabled={!!editingCategory}
+                            value={catId}
+                            onChange={(e) => setCatId(e.target.value)}
+                            placeholder="e.g. rings"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold focus:outline-none focus:border-amber-500 text-slate-800 disabled:opacity-50"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black uppercase text-slate-400 block text-left">Category Display Name</label>
+                          <input
+                            type="text"
+                            value={catName}
+                            onChange={(e) => setCatName(e.target.value)}
+                            placeholder="e.g. Rings"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold focus:outline-none focus:border-amber-500 text-slate-800"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black uppercase text-slate-400 block text-left">Hero Title</label>
+                          <input
+                            type="text"
+                            value={catTitle}
+                            onChange={(e) => setCatTitle(e.target.value)}
+                            placeholder="e.g. Engagement & Cocktail Rings"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold focus:outline-none focus:border-amber-500 text-slate-800"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black uppercase text-slate-400 block text-left">Hero Tagline</label>
+                          <input
+                            type="text"
+                            value={catTagline}
+                            onChange={(e) => setCatTagline(e.target.value)}
+                            placeholder="e.g. VVS-VS Clarity Hand-Crafted Diamonds"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold focus:outline-none focus:border-amber-500 text-slate-800"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1 text-left">
+                        <label className="text-[9px] font-black uppercase text-slate-400 block text-left">Hero Banner Image URL</label>
+                        <input
+                          type="text"
+                          value={catBanner}
+                          onChange={(e) => setCatBanner(e.target.value)}
+                          placeholder="https://images.unsplash.com/..."
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-medium focus:outline-none focus:border-amber-500 text-slate-800"
+                        />
+                      </div>
+
+                      <div className="space-y-1 text-left">
+                        <label className="text-[9px] font-black uppercase text-slate-400 block text-left">Description</label>
+                        <textarea
+                          rows={3}
+                          value={catDescription}
+                          onChange={(e) => setCatDescription(e.target.value)}
+                          placeholder="Describe this category's craftsmanship and unique identity..."
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium leading-normal focus:outline-none focus:border-amber-500 text-slate-800"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black uppercase text-slate-400 block text-left">Purity Assurance Badge</label>
+                          <input
+                            type="text"
+                            value={catPurityBadge}
+                            onChange={(e) => setCatPurityBadge(e.target.value)}
+                            placeholder="e.g. BIS Hallmarked 18K/22K"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold focus:outline-none focus:border-amber-500 text-slate-800"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black uppercase text-slate-400 block text-left">Trust Factor / Guarantee Promise</label>
+                          <input
+                            type="text"
+                            value={catTrustFactor}
+                            onChange={(e) => setCatTrustFactor(e.target.value)}
+                            placeholder="e.g. Hand-set by Elite Artisans"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold focus:outline-none focus:border-amber-500 text-slate-800"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-2 flex items-center gap-3">
+                        <button
+                          type="submit"
+                          className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-lg cursor-pointer"
+                        >
+                          {editingCategory ? "Commit Category Edits" : "Launch Category Collection"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowCategoryForm(false)}
+                          className="px-5 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs rounded-xl cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Grid List of categories */}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 text-left">
+                {categories.map((cat) => {
+                  const productCount = products.filter(p => p.category === cat.id).length;
+                  return (
+                    <div key={cat.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs flex flex-col hover:shadow-md transition-shadow">
+                      {/* Category Banner Preview */}
+                      <div className="h-32 bg-slate-100 relative">
+                        {cat.banner ? (
+                          <img
+                            src={cat.banner}
+                            alt={cat.name}
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400">
+                            <Layers className="w-8 h-8" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/20 to-transparent" />
+                        <div className="absolute bottom-3 left-4 right-4 text-white">
+                          <span className="text-[8px] bg-amber-500/95 text-white px-2 py-0.5 rounded-full font-black uppercase tracking-wider inline-block mb-1">
+                            {cat.id}
+                          </span>
+                          <h4 className="font-serif font-black text-sm leading-tight">{cat.name}</h4>
+                        </div>
+                        <div className="absolute top-3 right-4 bg-slate-900/80 backdrop-blur-md px-2 py-0.5 rounded-md text-[8.5px] font-bold text-white uppercase tracking-wider">
+                          {productCount} items
+                        </div>
+                      </div>
+
+                      <div className="p-4 flex-grow flex flex-col justify-between text-left space-y-3">
+                        <div className="space-y-1">
+                          {cat.tagline && (
+                            <p className="text-[10px] font-black text-amber-600 uppercase tracking-wider line-clamp-1">{cat.tagline}</p>
+                          )}
+                          {cat.description && (
+                            <p className="text-[11px] text-slate-500 leading-normal line-clamp-2">{cat.description}</p>
+                          )}
+                        </div>
+
+                        <div className="border-t border-slate-100 pt-3 space-y-1 text-left">
+                          {cat.purityBadge && (
+                            <div className="text-[10px] text-slate-600 font-bold flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              <span>Badge: {cat.purityBadge}</span>
+                            </div>
+                          )}
+                          {cat.trustFactor && (
+                            <div className="text-[10px] text-slate-600 font-bold flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                              <span>Promise: {cat.trustFactor}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="border-t border-slate-100 pt-3 flex items-center justify-between gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingCategory(cat);
+                              setCatId(cat.id);
+                              setCatName(cat.name);
+                              setCatTitle(cat.title || "");
+                              setCatTagline(cat.tagline || "");
+                              setCatDescription(cat.description || "");
+                              setCatBanner(cat.banner || "");
+                              setCatPurityBadge(cat.purityBadge || "");
+                              setCatTrustFactor(cat.trustFactor || "");
+                              setShowCategoryForm(true);
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                            }}
+                            className="flex-grow py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-[11px] rounded-lg transition-colors border border-slate-100 cursor-pointer text-center"
+                          >
+                            Edit Details
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Are you absolutely sure you want to delete category "${cat.name}"?`)) {
+                                onDeleteCategory?.(cat.id);
+                              }
+                            }}
+                            className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition-colors border border-rose-100 cursor-pointer"
+                            title="Delete Category"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
